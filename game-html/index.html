@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Find The Imposter 🕵️</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Nunito', sans-serif;
+      background: radial-gradient(ellipse at 50% 0%, #1e1e40 0%, #0f0f1f 60%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #phone {
+      position: relative;
+      width: 100%;
+      max-width: 390px;
+      height: 100vh;
+      background: #1A1A2E;
+      overflow: hidden;
+      box-shadow: 0 0 0 1px rgba(255,255,255,0.07), 0 40px 80px rgba(0,0,0,0.7);
+    }
+
+    #screen {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+    #screen::-webkit-scrollbar { width: 3px; }
+    #screen::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 3px; }
+
+    /* ====== KEYFRAMES ====== */
+    @keyframes screenIn  { from { opacity:0; transform:translateY(22px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes popIn     { 0%{opacity:0;transform:scale(.5)} 70%{transform:scale(1.06)} 100%{opacity:1;transform:scale(1)} }
+    @keyframes fadeUp    { from{opacity:0;transform:translateY(20px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes slideL    { from{opacity:0;transform:translateX(-18px)} to{opacity:1;transform:translateX(0)} }
+    @keyframes slideR    { from{opacity:0;transform:translateX(18px)}  to{opacity:1;transform:translateX(0)} }
+    @keyframes wobble    { 0%,100%{transform:rotate(0)} 15%{transform:rotate(-7deg)} 30%{transform:rotate(7deg)} 45%{transform:rotate(-3deg)} 60%{transform:rotate(3deg)} }
+    @keyframes floatY    { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes blink     { 0%,100%{opacity:1} 50%{transform:translateY(-7px)} }
+    @keyframes pulseRing { 0%{opacity:1;transform:scale(1)} 100%{opacity:0;transform:scale(1.22)} }
+    @keyframes glowPulse { 0%,100%{box-shadow:0 0 8px #FF4B4B40} 50%{box-shadow:0 0 22px #FF4B4B90} }
+    @keyframes scalePop  { 0%{transform:scale(0) rotate(-90deg)} 60%{transform:scale(1.15) rotate(5deg)} 100%{transform:scale(1) rotate(0)} }
+    @keyframes deltaFloat{ 0%{opacity:1;transform:translateY(0) scale(1)} 100%{opacity:0;transform:translateY(-48px) scale(1.3)} }
+    @keyframes barGrow   { from{width:0} to{width:var(--bar-w)} }
+    @keyframes shimmer   { 0%{background-position:-200% center} 100%{background-position:200% center} }
+    @keyframes pingDot   { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+    @keyframes cardPop   { 0%{opacity:0;transform:rotateY(90deg) scale(.9)} 100%{opacity:1;transform:rotateY(0) scale(1)} }
+
+    /* ====== TOKENS ====== */
+    :root {
+      --g:#58CC02; --gd:#46A302;
+      --b:#1CB0F6; --bd:#18A0DC;
+      --r:#FF4B4B; --rd:#C23B3B;
+      --o:#FF9600; --od:#CC7800;
+      --gold:#FFD700;
+      --navy:#1A1A2E;
+    }
+
+    /* ====== BUTTONS ====== */
+    .btn {
+      display:inline-flex; align-items:center; justify-content:center; gap:8px;
+      font-family:'Nunito',sans-serif; font-weight:800; font-size:18px;
+      color:white; border:none; border-radius:20px;
+      padding:0 24px; height:58px; cursor:pointer;
+      width:100%; user-select:none; -webkit-tap-highlight-color:transparent;
+      transition:transform .1s, box-shadow .1s;
+    }
+    .btn:active:not(:disabled) { transform:translateY(4px); }
+    .btn-p  { background:var(--g); box-shadow:0 4px 0 var(--gd); }
+    .btn-p:active  { box-shadow:0 0 0 var(--gd); }
+    .btn-b  { background:var(--b); box-shadow:0 4px 0 var(--bd); }
+    .btn-b:active  { box-shadow:0 0 0 var(--bd); }
+    .btn-r  { background:var(--r); box-shadow:0 4px 0 var(--rd); }
+    .btn-r:active  { box-shadow:0 0 0 var(--rd); }
+    .btn-o  { background:var(--o); box-shadow:0 4px 0 var(--od); }
+    .btn-o:active  { box-shadow:0 0 0 var(--od); }
+    .btn-dk { background:rgba(255,255,255,.1); box-shadow:0 4px 0 rgba(0,0,0,.3); }
+    .btn-dk:active { box-shadow:0 0 0 rgba(0,0,0,.3); }
+    .btn-ghost { background:transparent; border:2.5px solid var(--b); color:var(--b); box-shadow:none; }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .btn-sm { height:44px; font-size:15px; border-radius:14px; }
+    .btn-auto { width:auto; padding:0 24px; }
+
+    /* ====== VIEW TOGGLE ====== */
+    .vtoggle { display:flex; gap:8px; justify-content:center; padding:14px 20px 0; }
+    .vbtn {
+      padding:8px 16px; border-radius:30px; border:none; cursor:pointer;
+      font-family:'Nunito',sans-serif; font-weight:800; font-size:12px;
+      transition:all .2s; -webkit-tap-highlight-color:transparent;
+    }
+    .vbtn.on  { background:var(--g); color:white; box-shadow:0 3px 0 var(--gd); }
+    .vbtn.off { background:rgba(255,255,255,.08); color:rgba(255,255,255,.4); }
+
+    /* ====== CARD FLIP ====== */
+    .flip-wrap { perspective:1000px; }
+    .flip-inner {
+      transform-style:preserve-3d;
+      transition:transform .65s cubic-bezier(.215,.61,.355,1);
+      position:relative;
+    }
+    .flip-inner.down { transform:rotateY(180deg); }
+    .flip-inner.up   { transform:rotateY(0deg); }
+    .flip-front, .flip-back {
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+    }
+    .flip-back {
+      position:absolute; inset:0;
+      transform:rotateY(180deg);
+      backface-visibility:hidden;
+      -webkit-backface-visibility:hidden;
+    }
+
+    /* ====== RING ====== */
+    .ring-wrap { position:relative; flex-shrink:0; }
+    .ring-svg { transform:rotate(-90deg); display:block; }
+    .ring-label {
+      position:absolute; inset:0;
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+    }
+    .ring-num  { font-weight:900; color:white; line-height:1; }
+    .ring-sub  { font-weight:700; color:rgba(255,255,255,.4); }
+    .ring-anim { position:absolute; inset:-4px; border-radius:50%; animation:pulseRing .8s infinite; }
+
+    /* ====== SCREEN SHELL ====== */
+    .ss {
+      min-height:100vh; background:var(--navy);
+      display:flex; flex-direction:column; align-items:center;
+      padding:32px 20px 130px; gap:18px;
+      animation:screenIn .22s ease forwards;
+    }
+    .ss-center { justify-content:center; }
+    .fw { width:100%; }
+    .card-box {
+      width:100%; background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.07);
+      border-radius:16px; padding:14px 16px;
+    }
+    .lbl {
+      font-size:11px; font-weight:700; color:rgba(255,255,255,.35);
+      text-transform:uppercase; letter-spacing:1px; margin-bottom:10px;
+    }
+    .game-input {
+      width:100%; box-sizing:border-box;
+      background:rgba(255,255,255,.07);
+      border:2.5px solid rgba(255,255,255,.12);
+      border-radius:18px; padding:18px 22px;
+      color:white; font-family:'Nunito',sans-serif; font-weight:800;
+      font-size:22px; text-align:center;
+      transition:border-color .2s; outline:none;
+    }
+    .game-input:focus { border-color:var(--g); }
+    .game-input::placeholder { color:rgba(255,255,255,.25); }
+    .divider {
+      display:flex; align-items:center; gap:10px; width:100%;
+    }
+    .divider-line { flex:1; height:1px; background:rgba(255,255,255,.08); }
+    .divider-text { font-size:12px; font-weight:700; color:rgba(255,255,255,.25); }
+
+    /* ====== PLAYER ROW ====== */
+    .player-row {
+      display:flex; align-items:center; gap:10px;
+      padding:9px 0;
+    }
+    .player-row + .player-row { border-top:1px solid rgba(255,255,255,.05); }
+    .avatar {
+      border-radius:50%; display:flex; align-items:center; justify-content:center;
+      font-weight:900; font-family:'Nunito',sans-serif; flex-shrink:0;
+    }
+
+    /* ====== PLAYER ANSWER CARD ====== */
+    .pac-front {
+      position:absolute; inset:0; border-radius:14px;
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:3px;
+      background:rgba(255,255,255,.95);
+    }
+    .pac-back {
+      position:absolute; inset:0; border-radius:14px;
+      background:rgba(255,255,255,.07);
+      border:2px solid rgba(255,255,255,.1);
+      display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px;
+    }
+
+    /* ====== DEMO NAV ====== */
+    #demo-nav {
+      position:fixed; bottom:20px; left:50%; transform:translateX(-50%);
+      display:flex; align-items:center; gap:10px;
+      background:rgba(0,0,0,.88);
+      backdrop-filter:blur(14px);
+      border:1px solid rgba(255,255,255,.12);
+      border-radius:50px; padding:8px 14px;
+      z-index:9999;
+      box-shadow:0 8px 32px rgba(0,0,0,.6);
+      animation:fadeUp .4s .5s both;
+    }
+    .dnav-btn {
+      width:34px; height:34px; border-radius:50%; border:none;
+      font-size:16px; font-weight:900; cursor:pointer;
+      display:flex; align-items:center; justify-content:center;
+      font-family:'Nunito',sans-serif; transition:all .15s;
+    }
+    .dnav-btn:not(:disabled) { background:rgba(88,204,2,.2); color:var(--g); }
+    .dnav-btn:disabled { background:rgba(255,255,255,.05); color:rgba(255,255,255,.2); cursor:not-allowed; }
+    .dnav-center { text-align:center; min-width:110px; }
+    .dnav-label { font-size:10px; font-weight:700; color:rgba(255,255,255,.4); text-transform:uppercase; letter-spacing:1px; }
+    .dnav-phase { font-size:13px; font-weight:800; color:var(--g); }
+    .dnav-dots  { display:flex; gap:3px; justify-content:center; margin-top:3px; }
+    .dnav-dot   { height:5px; border-radius:3px; background:rgba(255,255,255,.2); transition:all .3s; }
+    .dnav-dot.on { background:var(--g); width:16px !important; }
+    .dnav-dot:not(.on) { width:5px; }
+
+    /* ====== AMBIENT GLOW ====== */
+    .glow-blob {
+      position:absolute; border-radius:50%; pointer-events:none;
+      animation:floatY 4s ease-in-out infinite;
+    }
+
+    /* ====== PODIUM ====== */
+    .podium-col {
+      flex:1; display:flex; flex-direction:column; align-items:center; gap:6px;
+    }
+    .podium-bar {
+      width:100%; display:flex; align-items:center; justify-content:center;
+      border-radius:10px 10px 0 0;
+    }
+
+    /* ====== SCORE ROW ====== */
+    .score-row {
+      display:flex; align-items:center; gap:10px;
+      padding:10px 14px; border-radius:14px;
+      animation:slideL .3s ease forwards;
+    }
+  </style>
+</head>
+<body>
+
+<div id="phone">
+  <div id="screen"></div>
+</div>
+
+<div id="demo-nav">
+  <button class="dnav-btn" id="btn-prev">←</button>
+  <div class="dnav-center">
+    <div class="dnav-label">DEMO MODE</div>
+    <div class="dnav-phase" id="phase-label">Home</div>
+    <div class="dnav-dots" id="dots"></div>
+  </div>
+  <button class="dnav-btn" id="btn-next">→</button>
+</div>
+
+<script>
+// ============================================================
+//  STATE
+// ============================================================
+const PHASES = [
+  'home','name-entry','lobby','role-reveal',
+  'submission','submission-locked','reveal',
+  'debate','voting','voting-done','round-result','final-score'
+];
+const PHASE_LABELS = {
+  'home':'Home','name-entry':'Name Entry','lobby':'Lobby',
+  'role-reveal':'Role Reveal','submission':'Submission',
+  'submission-locked':'Locked In','reveal':'Reveal',
+  'debate':'Debate','voting':'Voting','voting-done':'Vote Cast',
+  'round-result':'Round Result','final-score':'Final Score'
+};
+
+const PLAYERS = [
+  {id:'1',name:'Sara',  score:3,delta:1,color:'#FF6B6B',isHost:true},
+  {id:'2',name:'Khalid',score:2,delta:0,color:'#4ECDC4'},
+  {id:'3',name:'Adel',  score:2,delta:1,color:'#45B7D1'},
+  {id:'4',name:'Noor',  score:2,delta:1,color:'#96E6A1'},
+  {id:'5',name:'Omar',  score:1,delta:1,color:'#DDA0DD'},
+  {id:'6',name:'Jess',  score:1,delta:0,color:'#F0E68C'},
+];
+const ANSWERS = [
+  {playerId:'1',name:'Sara',  answer:'7', color:'#FF6B6B'},
+  {playerId:'2',name:'Khalid',answer:'12',color:'#4ECDC4'},
+  {playerId:'3',name:'Adel',  answer:'8', color:'#45B7D1'},
+  {playerId:'4',name:'Noor',  answer:'6', color:'#96E6A1'},
+  {playerId:'5',name:'Omar',  answer:'7', color:'#DDA0DD'},
+  {playerId:'6',name:'Jess',  answer:'—', color:'#F0E68C'},
+];
+
+const state = {
+  phase:'home', view:'phone',
+  myName:'Adel', myRole:'crew',
+  myAnswer:'', isAnswerLocked:false,
+  myVote:null, isVoteCast:false,
+  susMarks:[], revealed:false, debateRemaining:45,
+  roomCode:'ZXKR47',
+  crewPrompt:'How many hours of sleep do you get per night?',
+  imposterPrompt:'How many cups of coffee do you drink per day?',
+};
+
+// ============================================================
+//  HELPERS
+// ============================================================
+function ring(remaining, total, size) {
+  size = size || 90;
+  const sw = 9, r = (size-sw)/2;
+  const circ = 2*Math.PI*r;
+  const pct = remaining/total;
+  const offset = circ*(1-pct);
+  const col = pct>.3?'#58CC02':pct>.1?'#FF9600':'#FF4B4B';
+  return `
+    <div class="ring-wrap" style="width:${size}px;height:${size}px">
+      <svg class="ring-svg" width="${size}" height="${size}">
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="${sw}"/>
+        <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${col}" stroke-width="${sw}" stroke-linecap="round"
+          stroke-dasharray="${circ.toFixed(2)}" stroke-dashoffset="${offset.toFixed(2)}"
+          style="filter:drop-shadow(0 0 6px ${col}80);transition:stroke-dashoffset .8s ease,stroke .4s"/>
+      </svg>
+      <div class="ring-label">
+        <span class="ring-num" style="font-size:${(size*.22).toFixed(0)}px">${remaining}</span>
+        <span class="ring-sub" style="font-size:${(size*.1).toFixed(0)}px">secs</span>
+      </div>
+      ${pct<.15?`<div class="ring-anim" style="border:3px solid ${col}"></div>`:''}
+    </div>`;
+}
+
+function avatar(name, color, size) {
+  size = size||36;
+  return `<div class="avatar" style="width:${size}px;height:${size}px;background:${color}25;border:2px solid ${color};font-size:${size*.38}px;color:${color}">${name[0]}</div>`;
+}
+
+function answerCard(a, revealed, isSus, isImposter, small) {
+  const w=small?88:110, h=small?68:84;
+  const frontBg = isImposter?'linear-gradient(135deg,#3D0000,#1A0000)':'rgba(255,255,255,.95)';
+  const frontBorder = isSus?'2.5px solid #FF4B4B':isImposter?'2px solid #FF4B4B55':`2px solid ${a.color}30`;
+  const ansColor = isImposter?'#FF6B6B':a.color;
+  const nameColor = isImposter?'rgba(255,255,255,.5)':'rgba(0,0,0,.45)';
+  const susGlow = isSus?'animation:glowPulse 1.2s infinite':'';
+  return `
+    <div class="flip-wrap" style="width:${w}px;height:${h}px;flex-shrink:0">
+      <div class="flip-inner ${revealed?'up':'down'}" style="width:${w}px;height:${h}px">
+        <div class="flip-front pac-front" style="border:${frontBorder};background:${frontBg};box-shadow:${isSus?'0 0 16px #FF4B4B60':'0 4px 12px rgba(0,0,0,.2)'};${susGlow}">
+          ${isImposter?`<span style="font-size:12px;position:absolute;top:4px;right:6px">☠️</span>`:''}
+          <span style="font-family:Nunito;font-weight:900;font-size:${small?17:22}px;color:${ansColor};line-height:1">${a.answer||'—'}</span>
+          <span style="font-family:Nunito;font-weight:700;font-size:${small?10:12}px;color:${nameColor}">${a.name}</span>
+          ${isSus?`<div style="position:absolute;top:-8px;right:-8px;background:#FF4B4B;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:900;color:white">!</div>`:''}
+        </div>
+        <div class="flip-back pac-back">
+          <span style="font-size:${small?16:20}px">🔒</span>
+          <span style="font-family:Nunito;font-weight:700;font-size:10px;color:#58CC02">${a.name}</span>
+        </div>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+//  SCREENS
+// ============================================================
+function screenHome() {
+  return `
+    <div class="ss ss-center" style="position:relative;overflow:hidden">
+      <div class="glow-blob" style="width:280px;height:280px;left:50%;top:20%;transform:translateX(-50%);background:radial-gradient(circle,rgba(88,204,2,.06) 0%,transparent 70%)"></div>
+      <div class="glow-blob" style="width:200px;height:200px;right:-60px;bottom:20%;background:radial-gradient(circle,rgba(28,176,246,.05) 0%,transparent 70%);animation-delay:1.5s"></div>
+
+      <div style="text-align:center;animation:fadeUp .4s .05s both">
+        <div style="font-size:76px;display:block;margin-bottom:12px;filter:drop-shadow(0 8px 24px rgba(88,204,2,.3));animation:wobble 2.5s 2.5s ease-in-out infinite">🕵️</div>
+        <h1 style="font-weight:900;font-size:36px;color:white;line-height:1.1">
+          Find The<br><span style="color:#58CC02;text-shadow:0 0 30px #58CC0240">Imposter</span>
+        </h1>
+        <p style="font-weight:600;font-size:13px;color:rgba(255,255,255,.35);margin-top:10px">Party deduction game &bull; 4–10 players</p>
+      </div>
+
+      <div class="fw" style="animation:fadeUp .4s .15s both">
+        <button class="btn btn-p" id="btn-create">🎮 Create Room</button>
+      </div>
+
+      <div class="divider fw" style="animation:fadeUp .4s .22s both">
+        <div class="divider-line"></div>
+        <span class="divider-text">or join with code</span>
+        <div class="divider-line"></div>
+      </div>
+
+      <div class="fw" style="display:flex;flex-direction:column;gap:10px;animation:fadeUp .4s .3s both">
+        <input class="game-input" id="code-input" type="text" maxlength="6" placeholder="A B C 1 2 3" style="font-size:24px;letter-spacing:10px;font-weight:900" />
+        <button class="btn btn-b" id="btn-join" disabled>Join Room</button>
+      </div>
+
+      <p style="font-size:11px;font-weight:600;color:rgba(255,255,255,.18);animation:fadeUp .4s .38s both">No download &bull; No account &bull; Free to play</p>
+    </div>`;
+}
+
+function screenNameEntry() {
+  return `
+    <div class="ss ss-center">
+      <button class="btn btn-dk btn-auto btn-sm" id="btn-back" style="align-self:flex-start">← Back</button>
+      <div style="font-size:64px;animation:floatY 2.5s ease-in-out infinite">👤</div>
+      <div style="text-align:center">
+        <h2 style="font-weight:900;font-size:28px;color:white">What's your name?</h2>
+        <p style="font-weight:600;font-size:14px;color:rgba(255,255,255,.35);margin-top:8px">Other players will see this</p>
+      </div>
+      <input class="game-input" id="name-input" type="text" maxlength="16" placeholder="Your nickname..." value="${state.myName}" autofocus />
+      <div class="fw" id="name-btn-wrap" style="display:${state.myName.trim()?'block':'none'}">
+        <button class="btn btn-p" id="btn-name-go">Let's Play →</button>
+      </div>
+    </div>`;
+}
+
+function screenLobby() {
+  const isDisplay = state.view === 'display';
+
+  const phoneView = `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:20px;padding:20px 20px 0">
+      <div style="text-align:center;animation:popIn .4s .05s both">
+        <div style="font-size:52px">🎉</div>
+        <h2 style="font-weight:900;font-size:26px;color:white;margin:8px 0 4px">You're in!</h2>
+        <p style="font-weight:700;font-size:15px;color:#58CC02">${state.myName}</p>
+      </div>
+      <div class="card-box">
+        <div class="lbl">Players in Room</div>
+        ${PLAYERS.map((p,i)=>`
+          <div class="player-row" style="animation:slideL .3s ${(i*.07).toFixed(2)}s both">
+            ${avatar(p.name,p.color,32)}
+            <span style="font-weight:800;font-size:15px;color:${p.name===state.myName?'#58CC02':'white'};flex:1">${p.name}${p.name===state.myName?' (you)':''}</span>
+            ${p.isHost?'<span style="font-size:14px">👑</span>':''}
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${[0,1,2].map(i=>`<div style="width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.3);animation:pingDot .8s ${(i*.2).toFixed(1)}s ease-in-out infinite"></div>`).join('')}
+        <span style="font-weight:700;font-size:14px;color:rgba(255,255,255,.35)">Waiting for host to start...</span>
+      </div>
+    </div>`;
+
+  const qrCells = Array.from({length:49},(_,i)=>`<div style="border-radius:1.5px;background:${Math.sin(i*7.3)>.1?'#1A1A2E':'transparent'}"></div>`).join('');
+  const displayView = `
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:16px;padding:16px 16px 0">
+      <div style="text-align:center;animation:fadeUp .3s both">
+        <p style="font-size:12px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:2px;margin-bottom:8px">Join at findtheimposter.app</p>
+        <div style="display:flex;justify-content:center;gap:5px">
+          ${state.roomCode.split('').map((c,i)=>`
+            <div style="width:40px;height:50px;border-radius:11px;background:rgba(88,204,2,.15);border:2px solid #58CC0250;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#58CC02;animation:popIn .35s ${(i*.06).toFixed(2)}s both">${c}</div>`).join('')}
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;align-items:center;animation:fadeUp .3s .15s both">
+        <div style="width:88px;height:88px;border-radius:12px;background:white;padding:6px;display:grid;grid-template-columns:repeat(7,1fr);gap:1.5px;flex-shrink:0">${qrCells}</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <button class="btn btn-b btn-sm btn-auto">📋 Copy Link</button>
+          <button class="btn btn-dk btn-sm btn-auto">📤 Share</button>
+        </div>
+      </div>
+      <div style="width:100%">
+        <div class="lbl">${PLAYERS.length} / 10 Players</div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          ${PLAYERS.map((p,i)=>`
+            <div style="background:rgba(255,255,255,.05);border:1.5px solid ${p.color}40;border-radius:12px;padding:10px 8px;display:flex;flex-direction:column;align-items:center;gap:4px;animation:popIn .35s ${(i*.07).toFixed(2)}s both">
+              ${avatar(p.name,p.color,36)}
+              <span style="font-weight:800;font-size:12px;color:white">${p.name}</span>
+              ${p.isHost?'<span style="font-size:10px">👑</span>':''}
+            </div>`).join('')}
+        </div>
+      </div>
+      <button class="btn btn-p fw" id="btn-start">▶ Start Game</button>
+    </div>`;
+
+  return `
+    <div class="ss" style="padding-top:0;gap:14px">
+      <div class="vtoggle fw">
+        <button class="vbtn ${!isDisplay?'on':'off'}" data-view="phone">📱 My Phone</button>
+        <button class="vbtn ${isDisplay?'on':'off'}" data-view="display">📺 Shared Screen</button>
+      </div>
+      <div id="lobby-view" style="display:flex;flex-direction:column;width:100%;flex:1">
+        ${isDisplay?displayView:phoneView}
+      </div>
+    </div>`;
+}
+
+function screenRoleReveal() {
+  const isImp = state.myRole === 'imposter';
+  const prompt = isImp ? state.imposterPrompt : state.crewPrompt;
+  const cardBg = isImp ? 'linear-gradient(145deg,#2D0808,#1A0404)' : 'linear-gradient(145deg,#0A2010,#051008)';
+  const cardBorder = isImp ? 'rgba(255,75,75,.5)' : 'rgba(88,204,2,.5)';
+  const cardGlow = isImp ? 'rgba(255,75,75,.25)' : 'rgba(88,204,2,.2)';
+  const badgeBg = isImp ? 'rgba(255,75,75,.15)' : 'rgba(88,204,2,.15)';
+  const badgeBorder = isImp ? 'rgba(255,75,75,.4)' : 'rgba(88,204,2,.4)';
+  const badgeColor = isImp ? '#FF6B6B' : '#58CC02';
+  const emoji = isImp ? '☠️' : '🛡️';
+  const roleText = isImp ? '☠️ Imposter' : '🗡️ Crew Member';
+  const hint = isImp ? '🤫 Blend in. You have a DIFFERENT prompt.' : '🤫 Keep your prompt SECRET';
+  const progressDots = Array.from({length:7},(_,i)=>
+    `<div style="height:6px;width:${i<1?'16px':'6px'};border-radius:3px;background:${i<1?'#58CC02':'rgba(255,255,255,.15)'};"></div>`).join('');
+
+  return `
+    <div class="ss ss-center" style="gap:24px">
+      <div style="background:rgba(255,255,255,.08);border-radius:30px;padding:8px 20px;display:flex;align-items:center;gap:8px;animation:fadeUp .3s both">
+        <span style="font-weight:900;font-size:16px;color:white">Round 1</span>
+        <span style="font-weight:700;font-size:13px;color:rgba(255,255,255,.35)">of 7</span>
+        <div style="height:14px;width:1px;background:rgba(255,255,255,.2)"></div>
+        <div style="display:flex;gap:3px">${progressDots}</div>
+      </div>
+
+      <div class="flip-wrap" style="width:280px;height:320px">
+        <div class="flip-inner" id="role-card" style="width:280px;height:320px">
+          <div class="flip-front" style="position:absolute;inset:0;border-radius:24px;background:${cardBg};border:2px solid ${cardBorder};box-shadow:0 20px 60px ${cardGlow},inset 0 1px 0 rgba(255,255,255,.05);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;gap:16px">
+            <div style="font-size:52px;animation:floatY 2s ease-in-out infinite">${emoji}</div>
+            <div style="background:${badgeBg};border:1.5px solid ${badgeBorder};border-radius:12px;padding:6px 16px">
+              <span style="font-weight:900;font-size:14px;color:${badgeColor};text-transform:uppercase;letter-spacing:2px">${roleText}</span>
+            </div>
+            <p style="font-weight:800;font-size:16px;color:white;text-align:center;line-height:1.5;margin:0">${prompt}</p>
+            <p style="font-weight:600;font-size:12px;color:rgba(255,255,255,.3);text-align:center;margin:0">${hint}</p>
+          </div>
+          <div class="flip-back" style="border-radius:24px;background:linear-gradient(145deg,#1e1e3a,#12122a);border:2px solid rgba(255,255,255,.08);display:flex;align-items:center;justify-content:center">
+            <div style="font-size:52px;animation:wobble 1.5s ease-in-out infinite">🃏</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="ready-btn" style="width:100%;max-width:280px;opacity:0;transition:opacity .4s">
+        <button class="btn btn-p" id="btn-ready">I'm Ready to Answer →</button>
+      </div>
+    </div>`;
+}
+
+function screenSubmission() {
+  const locked = state.phase === 'submission-locked';
+  const lockedCount = 4;
+  return `
+    <div class="ss" style="padding-top:28px;gap:16px">
+      <div style="width:100%;display:flex;align-items:center;justify-content:space-between;animation:fadeUp .3s both">
+        <div>
+          <p style="font-size:12px;font-weight:700;color:rgba(255,255,255,.35);text-transform:uppercase;letter-spacing:1px">Round 1 of 7</p>
+          <p style="font-weight:800;font-size:16px;color:white;margin-top:2px">${lockedCount}/6 locked in</p>
+        </div>
+        ${ring(42,60,64)}
+      </div>
+
+      <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:center;width:100%;animation:fadeUp .3s .08s both">
+        ${ANSWERS.map((a,i)=>{
+          const isLocked = i<4;
+          return `<div style="display:flex;flex-direction:column;align-items:center;gap:3px;animation:popIn .3s ${(i*.05).toFixed(2)}s both">
+            <div style="width:38px;height:38px;border-radius:50%;background:${isLocked?a.color+'25':'rgba(255,255,255,.07)'};border:2px solid ${isLocked?a.color:'rgba(255,255,255,.12)'};display:flex;align-items:center;justify-content:center;font-size:${isLocked?16:14}px">
+              ${isLocked?'🔒':'<span style="animation:floatY 1.5s ease-in-out infinite;display:inline-block">✍️</span>'}
+            </div>
+            <span style="font-family:Nunito;font-weight:700;font-size:10px;color:${isLocked?a.color:'rgba(255,255,255,.25)'}">${a.name}</span>
+          </div>`;
+        }).join('')}
+      </div>
+
+      <div style="width:100%;background:rgba(88,204,2,.08);border:1.5px solid rgba(88,204,2,.2);border-radius:16px;padding:12px 16px;animation:fadeUp .3s .12s both">
+        <p style="font-size:12px;font-weight:700;color:#58CC02;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Your Prompt</p>
+        <p style="font-weight:800;font-size:15px;color:white">${state.crewPrompt}</p>
+      </div>
+
+      ${locked ? `
+        <div style="width:100%;background:rgba(88,204,2,.1);border:2px solid rgba(88,204,2,.4);border-radius:20px;padding:24px;display:flex;flex-direction:column;align-items:center;gap:10px;animation:popIn .4s both">
+          <div style="font-size:42px;animation:scalePop .5s both">✅</div>
+          <p style="font-weight:900;font-size:20px;color:#58CC02">&ldquo;${state.myAnswer}&rdquo; locked in!</p>
+          <p style="font-weight:600;font-size:14px;color:rgba(255,255,255,.4)">Waiting for others...</p>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            ${[0,1,2].map(i=>`<div style="width:8px;height:8px;border-radius:50%;background:#58CC0260;animation:pingDot .9s ${(i*.2).toFixed(1)}s ease-in-out infinite"></div>`).join('')}
+          </div>
+        </div>` : `
+        <div style="width:100%;display:flex;flex-direction:column;gap:14px;animation:fadeUp .3s .16s both">
+          <div style="position:relative">
+            <input class="game-input" id="ans-input" type="text" maxlength="12" placeholder="Type your answer..." value="${state.myAnswer}" style="font-size:28px" />
+          </div>
+          <button class="btn btn-p" id="btn-lock" ${!state.myAnswer.trim()?'disabled':''}>🔒 Lock In My Answer</button>
+          <p style="font-size:12px;font-weight:600;color:rgba(255,255,255,.25);text-align:center">One word or number &bull; No spaces</p>
+        </div>`}
+    </div>`;
+}
+
+function screenReveal() {
+  const rev = state.revealed;
+  return `
+    <div class="ss" style="gap:22px">
+      <div style="text-align:center;animation:fadeUp .3s both">
+        <div style="font-size:40px;margin-bottom:8px;${rev?'animation:popIn .4s both':'animation:floatY 2s ease-in-out infinite'}">${rev?'👀':'🎭'}</div>
+        <h2 style="font-weight:900;font-size:26px;color:white">${rev?'All Answers Revealed!':'Revealing Answers...'}</h2>
+        <p style="font-weight:600;font-size:14px;color:rgba(255,255,255,.35);margin-top:6px">${rev?'Who gave a suspicious answer?':'Flip the cards to see what everyone said'}</p>
+      </div>
+
+      <div id="cards-grid" style="display:flex;flex-wrap:wrap;gap:10px;justify-content:center;width:100%;perspective:1000px">
+        ${ANSWERS.map(a=>answerCard(a,rev,false,false,false)).join('')}
+      </div>
+
+      ${!rev?`
+        <div style="width:100%;max-width:320px">
+          <button class="btn btn-p" id="btn-flip" style="animation:shimmer 2s ease-in-out infinite;background:linear-gradient(90deg,#58CC02,#6ee600,#58CC02);background-size:200% 100%">🎭 Flip All Cards!</button>
+        </div>` : `
+        <div style="width:100%;max-width:320px;animation:fadeUp .4s .5s both">
+          <button class="btn btn-o" id="btn-to-debate">💬 Start Debate Timer</button>
+        </div>`}
+    </div>`;
+}
+
+function screenDebate() {
+  const isDisplay = state.view === 'display';
+  const r = state.debateRemaining;
+
+  const phoneCards = ANSWERS.map(a => {
+    const sus = state.susMarks.includes(a.playerId);
+    return `
+      <div class="sus-row" data-id="${a.playerId}" style="display:flex;align-items:center;gap:10px;background:${sus?'rgba(255,75,75,.1)':'rgba(255,255,255,.05)'};border:1.5px solid ${sus?'rgba(255,75,75,.35)':'rgba(255,255,255,.07)'};border-radius:14px;padding:10px 14px;transition:all .3s;cursor:pointer">
+        ${avatar(a.name,a.color,34)}
+        <div style="flex:1">
+          <div style="font-weight:800;font-size:15px;color:white">${a.name}</div>
+        </div>
+        <span style="font-weight:900;font-size:22px;color:${a.color};min-width:40px;text-align:center">${a.answer}</span>
+        <div style="width:36px;height:36px;border-radius:50%;border:none;background:${sus?'rgba(255,75,75,.3)':'rgba(255,255,255,.08)'};display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">
+          ${sus?'☠️':'👀'}
+        </div>
+        ${sus?`<div style="background:#FF4B4B;border-radius:8px;padding:2px 8px;font-weight:900;font-size:11px;color:white">SUS!</div>`:''}
+      </div>`;
+  }).join('');
+
+  const displayCards = ANSWERS.map(a => {
+    const sus = state.susMarks.includes(a.playerId);
+    return `
+      <div style="display:flex;align-items:center;gap:10px;background:${sus?'rgba(255,75,75,.1)':'rgba(255,255,255,.05)'};border:1.5px solid ${sus?'rgba(255,75,75,.35)':'rgba(255,255,255,.07)'};border-radius:14px;padding:10px 14px;${sus?'animation:glowPulse 1.2s infinite':''}">
+        ${avatar(a.name,a.color,34)}
+        <span style="font-weight:800;font-size:15px;color:white;flex:1">${a.name}</span>
+        <span style="font-weight:900;font-size:22px;color:${a.color}">${a.answer}</span>
+        ${sus?`<div style="background:#FF4B4B;border-radius:8px;padding:2px 8px;font-weight:900;font-size:11px;color:white">SUS!</div>`:''}
+      </div>`;
+  }).join('');
+
+  return `
+    <div class="ss" style="padding-top:0;gap:16px">
+      <div class="vtoggle fw">
+        <button class="vbtn ${!isDisplay?'on':'off'}" data-view="phone" style="--active-color:#FF9600;background:${!isDisplay?'var(--o)':'rgba(255,255,255,.08)'};${!isDisplay?'box-shadow:0 3px 0 var(--od)':''};color:${!isDisplay?'white':'rgba(255,255,255,.4)'}">📱 My Phone</button>
+        <button class="vbtn ${isDisplay?'on':'off'}" data-view="display" style="background:${isDisplay?'var(--o)':'rgba(255,255,255,.08)'};${isDisplay?'box-shadow:0 3px 0 var(--od)':''};color:${isDisplay?'white':'rgba(255,255,255,.4)'}">📺 Shared Screen</button>
+      </div>
+
+      <div style="display:flex;flex-direction:column;align-items:center;gap:10px;animation:popIn .4s both">
+        <h2 style="font-weight:900;font-size:22px;color:#FF9600">💬 DEBATE TIME!</h2>
+        ${ring(r,60,isDisplay?110:90)}
+        <div style="display:flex;gap:8px">
+          ${[30,15,5].map(j=>`<button class="adjust-time" data-jump="${j}" style="padding:5px 12px;border-radius:20px;border:1.5px solid rgba(255,255,255,.2);background:transparent;color:rgba(255,255,255,.4);font-family:Nunito;font-weight:700;font-size:12px;cursor:pointer">-${j}s</button>`).join('')}
+        </div>
+      </div>
+
+      <div style="width:100%">
+        <div class="lbl">${isDisplay?'All Answers':'Tap ☠️ to mark as suspicious'}</div>
+        <div style="display:flex;flex-direction:column;gap:8px" id="debate-cards">
+          ${isDisplay?displayCards:phoneCards}
+        </div>
+      </div>
+
+      <button class="btn btn-o fw" id="btn-to-vote">🗳️ Start Voting</button>
+    </div>`;
+}
+
+function screenVoting() {
+  const others = ANSWERS.filter(a=>a.name!==state.myName);
+  return `
+    <div class="ss" style="gap:18px">
+      <div style="text-align:center;animation:popIn .4s both">
+        <div style="font-size:44px;margin-bottom:8px;animation:floatY 1.5s ease-in-out infinite">🗳️</div>
+        <h2 style="font-weight:900;font-size:28px;color:white">Vote Now!</h2>
+        <p style="font-weight:600;font-size:14px;color:rgba(255,255,255,.4);margin-top:6px">Who is the Imposter?</p>
+      </div>
+      ${ring(22,30,72)}
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+        ${others.map((a,i)=>{
+          const sel = state.myVote===a.playerId;
+          return `
+            <button class="vote-opt" data-id="${a.playerId}" style="display:flex;align-items:center;gap:12px;background:${sel?'rgba(88,204,2,.15)':'rgba(255,255,255,.05)'};border:${sel?'2.5px solid #58CC02':'1.5px solid rgba(255,255,255,.1)'};border-radius:16px;padding:14px 16px;cursor:pointer;width:100%;text-align:left;box-shadow:${sel?'0 0 20px rgba(88,204,2,.2)':'none'};transition:all .2s;animation:slideL .3s ${(i*.07).toFixed(2)}s both">
+              ${avatar(a.name,a.color,42)}
+              <div style="flex:1">
+                <div style="font-weight:800;font-size:16px;color:white">${a.name}</div>
+                <div style="font-weight:700;font-size:13px;color:rgba(255,255,255,.4)">Answered: ${a.answer}</div>
+              </div>
+              <div style="width:28px;height:28px;border-radius:50%;${sel?'background:#58CC02;':'border:2px solid rgba(255,255,255,.2);'}display:flex;align-items:center;justify-content:center;font-size:15px;color:white;font-weight:900;${sel?'animation:scalePop .3s both':''}">
+                ${sel?'✓':''}
+              </div>
+            </button>`;
+        }).join('')}
+      </div>
+      <div id="cast-wrap" style="width:100%;display:${state.myVote?'block':'none'};animation:fadeUp .3s both">
+        <button class="btn btn-r" id="btn-cast">Cast My Vote!</button>
+      </div>
+    </div>`;
+}
+
+function screenVotingDone() {
+  return `
+    <div class="ss ss-center" style="gap:18px">
+      <div style="text-align:center;animation:popIn .5s both">
+        <div style="font-size:72px;animation:floatY 2s ease-in-out infinite">🗳️</div>
+        <h2 style="font-weight:900;font-size:28px;color:#58CC02;margin-top:12px">Vote Cast!</h2>
+        <p style="font-weight:700;font-size:16px;color:rgba(255,255,255,.5);margin-top:8px">Waiting for others to vote...</p>
+      </div>
+      <div style="display:flex;gap:8px">
+        ${[0,1,2].map(i=>`<div style="width:10px;height:10px;border-radius:50%;background:#58CC0260;animation:pingDot .9s ${(i*.25).toFixed(2)}s ease-in-out infinite"></div>`).join('')}
+      </div>
+      <div style="margin-top:20px;animation:fadeUp .4s 2s both">
+        <button class="btn btn-p btn-auto" id="btn-see-results">See Results →</button>
+      </div>
+    </div>`;
+}
+
+function screenRoundResult() {
+  const win = true; // crew wins for demo
+  const votes = [
+    {name:'Khalid',votes:4,color:'#4ECDC4'},
+    {name:'Sara',  votes:1,color:'#FF6B6B'},
+    {name:'Noor',  votes:1,color:'#96E6A1'},
+  ];
+  const sorted = [...PLAYERS].sort((a,b)=>b.score-a.score);
+
+  return `
+    <div class="ss" style="gap:16px">
+      <div style="text-align:center;padding:20px 24px;background:${win?'linear-gradient(135deg,rgba(88,204,2,.2),rgba(88,204,2,.05))':'linear-gradient(135deg,rgba(255,75,75,.2),rgba(255,75,75,.05))'};border:2px solid ${win?'rgba(88,204,2,.4)':'rgba(255,75,75,.4)'};border-radius:24px;width:100%;animation:popIn .5s both">
+        <div style="font-size:52px;margin-bottom:8px;animation:wobble 1s .3s ease-in-out both">${win?'🎉':'😈'}</div>
+        <h2 style="font-weight:900;font-size:26px;color:${win?'#58CC02':'#FF4B4B'}">${win?'Crew Wins!':'Imposter Wins!'}</h2>
+        <p style="font-weight:700;font-size:15px;color:rgba(255,255,255,.6);margin-top:6px">
+          The Imposter was <strong style="color:#4ECDC4">Khalid</strong> ${win?'— caught! ✓':'— escaped! 😏'}
+        </p>
+      </div>
+
+      <div class="card-box" style="animation:fadeUp .3s .3s both">
+        <div class="lbl">Vote Breakdown</div>
+        ${votes.map((v,i)=>`
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:${i<votes.length-1?8:0}px">
+            <span style="font-weight:800;font-size:14px;color:${v.color};min-width:60px">${v.name}</span>
+            <div style="flex:1;height:8px;background:rgba(255,255,255,.07);border-radius:4px;overflow:hidden">
+              <div style="height:100%;background:${v.color};border-radius:4px;width:${Math.round((v.votes/6)*100)}%;animation:barGrow .6s ${(.5+i*.15).toFixed(2)}s ease-out both"></div>
+            </div>
+            <span style="font-weight:900;font-size:14px;color:white;min-width:16px">${v.votes}</span>
+          </div>`).join('')}
+      </div>
+
+      <div style="width:100%;display:flex;flex-direction:column;gap:8px;animation:fadeUp .3s .6s both">
+        ${[
+          {label:'🛡️ Crew Prompt',text:state.crewPrompt,col:'#58CC02'},
+          {label:'☠️ Imposter Prompt',text:state.imposterPrompt,col:'#FF4B4B'},
+        ].map(p=>`
+          <div style="background:${p.col}12;border:1.5px solid ${p.col}30;border-radius:14px;padding:10px 14px">
+            <span style="font-size:11px;font-weight:700;color:${p.col};text-transform:uppercase;letter-spacing:1px">${p.label}</span>
+            <p style="font-weight:700;font-size:13px;color:white;margin-top:4px">${p.text}</p>
+          </div>`).join('')}
+      </div>
+
+      <div class="card-box" style="animation:fadeUp .3s .8s both">
+        <div class="lbl">Scores</div>
+        ${sorted.map((p,i)=>`
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:${i<sorted.length-1?8:0}px">
+            <span style="font-weight:900;font-size:13px;color:rgba(255,255,255,.35);min-width:18px">#${i+1}</span>
+            ${avatar(p.name,p.color,28)}
+            <span style="font-weight:800;font-size:14px;color:white;flex:1">${p.name}</span>
+            <div style="display:flex;align-items:center;gap:6px;position:relative">
+              ${p.delta>0?`<span style="font-weight:900;font-size:13px;color:#58CC02;animation:deltaFloat 1.5s ${(.8+i*.1).toFixed(1)}s ease-out both;position:absolute;right:28px">+${p.delta}</span>`:''}
+              <span style="font-weight:900;font-size:18px;color:white">${p.score}</span>
+            </div>
+          </div>`).join('')}
+      </div>
+
+      <button class="btn btn-p fw" id="btn-next-round">Next Round →</button>
+    </div>`;
+}
+
+function screenFinalScore() {
+  const sorted = [...PLAYERS].sort((a,b)=>b.score-a.score);
+  const trophies = ['🥇','🥈','🥉'];
+  const tColors = ['#FFD700','#C0C0C0','#CD7F32'];
+  const podiumOrder = [1,0,2]; // 2nd, 1st, 3rd
+  const heights = [80,110,66];
+
+  return `
+    <div class="ss" style="gap:18px">
+      <div style="text-align:center;animation:popIn .5s both">
+        <div style="font-size:56px;margin-bottom:8px;animation:wobble 1.5s .5s ease-in-out 2">🏆</div>
+        <h1 style="font-weight:900;font-size:30px;color:white">Game Over!</h1>
+        <p style="font-size:14px;font-weight:600;color:rgba(255,255,255,.35);margin-top:6px">Final Standings &mdash; 7 rounds</p>
+      </div>
+
+      <div style="display:flex;gap:10px;align-items:flex-end;justify-content:center;width:100%">
+        ${podiumOrder.map((rankIdx,col)=>{
+          const p = sorted[rankIdx];
+          if(!p) return '';
+          return `
+            <div class="podium-col" style="animation:fadeUp .4s ${(.2+col*.15).toFixed(2)}s both">
+              <span style="font-size:28px">${trophies[rankIdx]}</span>
+              <div class="avatar" style="width:46px;height:46px;background:${p.color}30;border:3px solid ${tColors[rankIdx]};font-size:18px;color:${p.color};box-shadow:0 0 16px ${tColors[rankIdx]}50">${p.name[0]}</div>
+              <span style="font-weight:800;font-size:14px;color:white">${p.name}</span>
+              <div class="podium-bar" style="height:${heights[col]}px;background:linear-gradient(180deg,${tColors[rankIdx]}25,${tColors[rankIdx]}08);border:1.5px solid ${tColors[rankIdx]}40">
+                <span style="font-weight:900;font-size:22px;color:${tColors[rankIdx]}">${p.score}</span>
+              </div>
+            </div>`;
+        }).join('')}
+      </div>
+
+      <div style="width:100%;display:flex;flex-direction:column;gap:6px">
+        ${sorted.map((p,i)=>`
+          <div class="score-row" style="background:${i===0?'rgba(255,215,0,.08)':'rgba(255,255,255,.04)'};border:${i===0?'1.5px solid rgba(255,215,0,.3)':'1px solid rgba(255,255,255,.06)'};animation-delay:${(.5+i*.08).toFixed(2)}s">
+            <span style="font-weight:900;font-size:16px;min-width:28px;color:${i<3?tColors[i]:'rgba(255,255,255,.3)'}">${i<3?trophies[i]:'#'+(i+1)}</span>
+            ${avatar(p.name,p.color,34)}
+            <span style="font-weight:800;font-size:16px;color:white;flex:1">${p.name}</span>
+            <span style="font-weight:900;font-size:20px;color:${i===0?'#FFD700':'white'}">${p.score}</span>
+            <span style="font-weight:700;font-size:12px;color:rgba(255,255,255,.3)">pts</span>
+          </div>`).join('')}
+      </div>
+
+      <div style="width:100%;display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-p" id="btn-play-again">🔄 Play Again</button>
+        <button class="btn btn-ghost">📤 Share Results</button>
+      </div>
+    </div>`;
+}
+
+// ============================================================
+//  RENDER
+// ============================================================
+const renderers = {
+  'home':               screenHome,
+  'name-entry':         screenNameEntry,
+  'lobby':              screenLobby,
+  'role-reveal':        screenRoleReveal,
+  'submission':         screenSubmission,
+  'submission-locked':  screenSubmission,
+  'reveal':             screenReveal,
+  'debate':             screenDebate,
+  'voting':             screenVoting,
+  'voting-done':        screenVotingDone,
+  'round-result':       screenRoundResult,
+  'final-score':        screenFinalScore,
+};
+
+function render() {
+  const sc = document.getElementById('screen');
+  sc.innerHTML = (renderers[state.phase]||screenHome)();
+  sc.scrollTop = 0;
+  bindEvents();
+  updateDemoNav();
+  if(state.phase==='role-reveal') triggerCardFlip();
+  if(state.phase==='final-score') triggerConfetti();
+}
+
+function setPhase(p) { state.phase = p; render(); }
+
+// ============================================================
+//  EVENT BINDING
+// ============================================================
+function bindEvents() {
+  const sc = document.getElementById('screen');
+  const q  = id => sc.querySelector('#'+id);
+  const qa = sel => sc.querySelectorAll(sel);
+
+  // Home
+  const btnCreate = q('btn-create');
+  if(btnCreate) btnCreate.onclick = ()=>setPhase('name-entry');
+
+  const codeInput = q('code-input');
+  const btnJoin   = q('btn-join');
+  if(codeInput && btnJoin) {
+    codeInput.oninput = e=>{
+      const v = e.target.value.toUpperCase().replace(/[^A-Z2-9]/g,'');
+      e.target.value = v;
+      btnJoin.disabled = v.length!==6;
+    };
+    btnJoin.onclick = ()=>setPhase('name-entry');
+  }
+
+  // Name entry
+  const btnBack = q('btn-back');
+  if(btnBack) btnBack.onclick = ()=>setPhase('home');
+
+  const nameInput = q('name-input');
+  const nameBtnW  = q('name-btn-wrap');
+  if(nameInput) {
+    nameInput.oninput = e=>{
+      state.myName = e.target.value;
+      if(nameBtnW) nameBtnW.style.display = e.target.value.trim()?'block':'none';
+    };
+    nameInput.onfocus = ()=>nameInput.style.borderColor='#58CC02';
+    nameInput.onblur  = ()=>nameInput.style.borderColor=state.myName?'rgba(88,204,2,.5)':'rgba(255,255,255,.12)';
+  }
+  const btnNameGo = q('btn-name-go');
+  if(btnNameGo) btnNameGo.onclick = ()=>{ state.myName=nameInput.value.trim()||'Adel'; setPhase('lobby'); };
+
+  // Lobby view toggle + start
+  qa('.vbtn').forEach(b=>{
+    b.onclick = ()=>{ state.view=b.dataset.view; setPhase(state.phase); };
+  });
+  const btnStart = q('btn-start');
+  if(btnStart) btnStart.onclick = ()=>setPhase('role-reveal');
+
+  // Role reveal
+  const btnReady = q('btn-ready');
+  if(btnReady) btnReady.onclick = ()=>setPhase('submission');
+
+  // Submission
+  const ansInput = q('ans-input');
+  const btnLock  = q('btn-lock');
+  if(ansInput && btnLock) {
+    ansInput.oninput = e=>{
+      state.myAnswer = e.target.value.replace(/\s/g,'');
+      e.target.value = state.myAnswer;
+      btnLock.disabled = !state.myAnswer.trim();
+    };
+    btnLock.onclick = ()=>{ if(state.myAnswer.trim()){ state.isAnswerLocked=true; setPhase('submission-locked'); } };
+  }
+
+  // Reveal
+  const btnFlip = q('btn-flip');
+  if(btnFlip) btnFlip.onclick = ()=>{ state.revealed=true; setPhase('reveal'); };
+  const btnToDebate = q('btn-to-debate');
+  if(btnToDebate) btnToDebate.onclick = ()=>setPhase('debate');
+
+  // Debate
+  qa('.sus-row').forEach(row=>{
+    row.onclick = ()=>{
+      const id = row.dataset.id;
+      if(state.susMarks.includes(id)) state.susMarks=state.susMarks.filter(x=>x!==id);
+      else state.susMarks.push(id);
+      setPhase('debate');
+    };
+  });
+  qa('.adjust-time').forEach(b=>{
+    b.onclick = ()=>{ state.debateRemaining=Math.max(0,state.debateRemaining-Number(b.dataset.jump)); setPhase('debate'); };
+  });
+  const btnToVote = q('btn-to-vote');
+  if(btnToVote) btnToVote.onclick = ()=>setPhase('voting');
+
+  // Voting
+  qa('.vote-opt').forEach(btn=>{
+    btn.onclick = ()=>{
+      state.myVote = btn.dataset.id;
+      const wrap = q('cast-wrap');
+      if(wrap) wrap.style.display='block';
+      qa('.vote-opt').forEach(b=>{
+        const sel = b.dataset.id===state.myVote;
+        b.style.background   = sel?'rgba(88,204,2,.15)':'rgba(255,255,255,.05)';
+        b.style.border       = sel?'2.5px solid #58CC02':'1.5px solid rgba(255,255,255,.1)';
+        b.style.boxShadow    = sel?'0 0 20px rgba(88,204,2,.2)':'none';
+        const check = b.querySelector('div:last-child');
+        if(check){
+          check.style.background = sel?'#58CC02':'';
+          check.style.border     = sel?'none':'2px solid rgba(255,255,255,.2)';
+          check.textContent      = sel?'✓':'';
+        }
+      });
+    };
+  });
+  const btnCast = q('btn-cast');
+  if(btnCast) btnCast.onclick = ()=>{ state.isVoteCast=true; setPhase('voting-done'); };
+
+  // Voting done
+  const btnSeeResults = q('btn-see-results');
+  if(btnSeeResults) btnSeeResults.onclick = ()=>setPhase('round-result');
+
+  // Round result
+  const btnNextRound = q('btn-next-round');
+  if(btnNextRound) btnNextRound.onclick = ()=>{ state.revealed=false; state.susMarks=[]; state.myVote=null; state.myAnswer=''; state.isAnswerLocked=false; state.isVoteCast=false; setPhase('final-score'); };
+
+  // Final score
+  const btnPlayAgain = q('btn-play-again');
+  if(btnPlayAgain) btnPlayAgain.onclick = ()=>{ state.phase='home'; state.revealed=false; state.susMarks=[]; state.myVote=null; state.myAnswer=''; state.isAnswerLocked=false; state.isVoteCast=false; state.debateRemaining=45; render(); };
+}
+
+// ============================================================
+//  CARD FLIP (ROLE REVEAL)
+// ============================================================
+function triggerCardFlip() {
+  setTimeout(()=>{
+    const card = document.getElementById('role-card');
+    if(card) { card.classList.remove('up'); card.classList.add('down'); }
+    setTimeout(()=>{
+      if(card) { card.classList.remove('down'); card.classList.add('up'); }
+      setTimeout(()=>{
+        const readyBtn = document.getElementById('ready-btn');
+        if(readyBtn) readyBtn.style.opacity='1';
+      },600);
+    },800);
+  },100);
+}
+
+// ============================================================
+//  CONFETTI
+// ============================================================
+function triggerConfetti() {
+  if(typeof confetti==='undefined') return;
+  setTimeout(()=>{
+    confetti({particleCount:120,spread:80,origin:{y:.4},colors:['#58CC02','#1CB0F6','#FFD700','#FF9600','#FF4B4B']});
+    setTimeout(()=>{
+      confetti({particleCount:60,angle:60,spread:55,origin:{x:0,y:.5},colors:['#58CC02','#FFD700']});
+      confetti({particleCount:60,angle:120,spread:55,origin:{x:1,y:.5},colors:['#1CB0F6','#FF9600']});
+    },400);
+  },300);
+}
+
+// ============================================================
+//  DEMO NAV
+// ============================================================
+function updateDemoNav() {
+  const idx = PHASES.indexOf(state.phase);
+  document.getElementById('phase-label').textContent = PHASE_LABELS[state.phase]||state.phase;
+  document.getElementById('btn-prev').disabled = idx===0;
+  document.getElementById('btn-next').disabled = idx===PHASES.length-1;
+  const dots = document.getElementById('dots');
+  dots.innerHTML = PHASES.map((_,i)=>`<div class="dnav-dot ${i===idx?'on':''}" style="width:${i===idx?16:5}px"></div>`).join('');
+}
+
+document.getElementById('btn-prev').onclick = ()=>{
+  const idx = PHASES.indexOf(state.phase);
+  if(idx>0) { state.phase=PHASES[idx-1]; render(); }
+};
+document.getElementById('btn-next').onclick = ()=>{
+  const idx = PHASES.indexOf(state.phase);
+  if(idx<PHASES.length-1) { state.phase=PHASES[idx+1]; render(); }
+};
+
+// ============================================================
+//  INIT
+// ============================================================
+render();
+</script>
+</body>
+</html>
