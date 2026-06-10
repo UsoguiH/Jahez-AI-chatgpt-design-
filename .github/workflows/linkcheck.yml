@@ -1,0 +1,22 @@
+name: Check public play links
+
+on:
+  push:
+    branches: [claude/saudi-roguelite-shop-game-o544pr]
+    paths: ['.github/workflows/linkcheck.yml']
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Curl candidate play URLs
+        run: |
+          for url in \
+            "https://raw.githack.com/UsoguiH/Jahez-AI-chatgpt-design-/claude/saudi-roguelite-shop-game-o544pr/index.html" \
+            "https://rawcdn.githack.com/UsoguiH/Jahez-AI-chatgpt-design-/f44f2043596e7b29a7950cb4e7899ecc3822e318/index.html" \
+            "https://cdn.statically.io/gh/UsoguiH/Jahez-AI-chatgpt-design-/claude/saudi-roguelite-shop-game-o544pr/index.html" ; do
+            code=$(curl -s -o /dev/null -w "%{http_code}" --max-time 20 "$url")
+            ctype=$(curl -s -o /dev/null -w "%{content_type}" --max-time 20 "$url")
+            echo "RESULT $code $ctype $url"
+          done
