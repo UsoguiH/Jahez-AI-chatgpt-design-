@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>سِراج — SIRAJ</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@400;600;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div id="game-frame">
+
+  <!-- ======= TITLE SCREEN ======= -->
+  <div id="screen-title" class="screen active">
+    <div class="title-stars"></div>
+    <div class="title-lantern">
+      <canvas id="lantern-canvas" width="96" height="128"></canvas>
+      <div class="lantern-glow"></div>
+    </div>
+    <h1 class="game-title">سِــراج</h1>
+    <div class="game-subtitle">تاجر بالنهار … داشر بالليل</div>
+    <div class="title-buttons">
+      <button id="btn-new-game" class="btn btn-big">رحلة جديدة</button>
+      <button id="btn-continue" class="btn btn-big btn-ghost hidden">متابعة</button>
+    </div>
+    <div class="title-footer">سوق المرقب · نجد · مستوحاة من التراث السعودي</div>
+  </div>
+
+  <!-- ======= INTRO STORY ======= -->
+  <div id="screen-intro" class="screen">
+    <div class="story-card parchment">
+      <div class="sadu-divider"></div>
+      <p id="intro-text"></p>
+      <div class="sadu-divider"></div>
+      <button id="btn-intro-next" class="btn">›› تابع</button>
+    </div>
+  </div>
+
+  <!-- ======= DAY / SHOP ======= -->
+  <div id="screen-shop" class="screen">
+    <div class="canvas-wrap">
+      <canvas id="shop-canvas" width="832" height="512"></canvas>
+
+      <!-- HUD -->
+      <div class="hud hud-top-right">
+        <div class="hud-coin"><span class="coin-icon"></span><span id="hud-gold">0</span></div>
+        <div class="hud-rep" title="السمعة"><span class="rep-icon"></span>
+          <div class="rep-bar"><div id="hud-rep-fill"></div></div>
+        </div>
+      </div>
+      <div class="hud hud-top-left">
+        <div class="phase-chip" id="shop-phase-chip">تجهيز الدكان</div>
+      </div>
+      <div class="day-arch">
+        <div class="day-arch-inner"><span id="hud-day">اليوم ١</span></div>
+      </div>
+
+      <div class="hud hud-bottom-right">
+        <button id="btn-open-shop" class="btn btn-accent">افتح الدكان 🔔</button>
+        <button id="btn-end-day" class="btn btn-ghost hidden">أغلق الدكان</button>
+      </div>
+      <div class="hud hud-bottom-left">
+        <div class="hint-chip" id="shop-hint">اضغط على طاولة العرض لرصّ البضاعة</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= STOCK / PRICE MODAL ======= -->
+  <div id="modal-stock" class="modal hidden">
+    <div class="modal-card parchment">
+      <h3>طاولة العرض</h3>
+      <div id="stock-current" class="stock-current hidden">
+        <div class="stock-current-row">
+          <canvas class="slot-icon" id="stock-cur-icon" width="40" height="40"></canvas>
+          <div><div id="stock-cur-name" class="item-name"></div><div id="stock-cur-count" class="item-sub"></div></div>
+          <button id="btn-unstock" class="btn btn-small btn-ghost">أرجِعها للمخزن</button>
+        </div>
+      </div>
+      <div class="inv-grid" id="stock-grid"></div>
+      <div id="price-setter" class="price-setter hidden">
+        <div class="price-row">
+          <button class="step-btn" id="price-minus">−</button>
+          <div class="price-display"><span id="price-value">0</span> <span class="rial">ريال</span></div>
+          <button class="step-btn" id="price-plus">+</button>
+        </div>
+        <input type="range" id="price-slider" min="1" max="300" value="50">
+        <div class="price-hint" id="price-hint">حدّد السوم… وراقب وجوه الزباين</div>
+        <button id="btn-confirm-stock" class="btn btn-accent">اعتمد ✓</button>
+      </div>
+      <button class="modal-close" data-close="modal-stock">✕</button>
+    </div>
+  </div>
+
+  <!-- ======= HAGGLE MODAL ======= -->
+  <div id="modal-haggle" class="modal hidden">
+    <div class="modal-card parchment haggle-card">
+      <div class="haggle-head">
+        <canvas id="haggle-portrait" width="96" height="96"></canvas>
+        <div class="haggle-who">
+          <div id="haggle-name" class="item-name"></div>
+          <div id="haggle-patience" class="patience"></div>
+          <div id="haggle-tell" class="haggle-tell"></div>
+        </div>
+      </div>
+      <div class="haggle-speech" id="haggle-speech">«وش آخرها؟»</div>
+      <div class="haggle-item-row">
+        <canvas class="slot-icon" id="haggle-item-icon" width="40" height="40"></canvas>
+        <span id="haggle-item-name"></span>
+        <span class="haggle-ask">سومك: <b id="haggle-ask"></b></span>
+        <span class="haggle-bid">عرضه: <b id="haggle-bid"></b></span>
+      </div>
+      <div class="price-row">
+        <button class="step-btn" id="haggle-minus">−</button>
+        <div class="price-display"><span id="haggle-counter">0</span> <span class="rial">ريال</span></div>
+        <button class="step-btn" id="haggle-plus">+</button>
+      </div>
+      <input type="range" id="haggle-slider" min="1" max="300" value="50">
+      <div class="haggle-buttons">
+        <button id="btn-haggle-offer" class="btn btn-accent">اعرض السوم</button>
+        <button id="btn-haggle-accept" class="btn">وافق على عرضه</button>
+        <button id="btn-haggle-coffee" class="btn btn-coffee">☕ قهوة وتمر</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= EVENING / LEDGER ======= -->
+  <div id="screen-evening" class="screen">
+    <div class="evening-bg"></div>
+    <div class="evening-card parchment">
+      <h2>دفتر المغرب <span class="ledger-day" id="ledger-day"></span></h2>
+      <div class="sadu-divider"></div>
+      <div class="ledger" id="ledger-lines"></div>
+      <div class="ledger-totals">
+        <div>الرصيد: <b id="ledger-gold"></b> <span class="rial">ريال</span></div>
+        <div>الدّين المتبقي: <b id="ledger-debt"></b> <span class="rial">ريال</span></div>
+      </div>
+      <div class="debt-row">
+        <input type="range" id="debt-slider" min="0" max="100" value="0">
+        <button id="btn-pay-debt" class="btn btn-small">سدّد <span id="debt-amt">0</span></button>
+      </div>
+      <div class="evening-buttons">
+        <button id="btn-upgrades" class="btn">🛠 تطوير الدكان</button>
+        <button id="btn-dive" class="btn btn-night">🌙 دشّة الليل</button>
+        <button id="btn-sleep" class="btn btn-ghost">😴 نام للصبح</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ======= UPGRADES ======= -->
+  <div id="modal-upgrades" class="modal hidden">
+    <div class="upgrade-board">
+      <div class="upgrade-banner">تطوير الدكان</div>
+      <div class="upgrade-grid" id="upgrade-grid"></div>
+      <button class="modal-close light" data-close="modal-upgrades">✕</button>
+    </div>
+  </div>
+
+  <!-- ======= ZONE SELECT ======= -->
+  <div id="screen-zones" class="screen">
+    <div class="zones-wrap">
+      <h2 class="zones-title">وين الدشّة الليلة؟</h2>
+      <div class="zone-cards" id="zone-cards"></div>
+      <button id="btn-zones-back" class="btn btn-ghost">رجوع</button>
+    </div>
+  </div>
+
+  <!-- ======= DUNGEON ======= -->
+  <div id="screen-dungeon" class="screen">
+    <div class="canvas-wrap">
+      <canvas id="dungeon-canvas" width="832" height="512"></canvas>
+
+      <div class="hud hud-top-left">
+        <div class="hp-wrap"><span class="hp-heart"></span>
+          <div class="hp-bar"><div id="hud-hp-fill"></div></div>
+          <span id="hud-hp-num" class="hp-num"></span>
+        </div>
+        <div class="hud-coin small"><span class="coin-icon"></span><span id="hud-dgold">0</span></div>
+      </div>
+
+      <div class="hud hud-top-right">
+        <div class="satchel" id="satchel"></div>
+      </div>
+
+      <div class="hud hud-bottom-left">
+        <div class="hint-chip">⬅⬆⬇➡ حركة · <b>J</b> ضرب · <b>K</b> تفادي · <b>E</b> بخور العودة</div>
+      </div>
+      <div class="hud hud-bottom-right">
+        <div class="minimap" id="minimap"></div>
+      </div>
+
+      <div id="boss-banner" class="boss-banner hidden">
+        <div class="boss-banner-scroll"><span id="boss-name"></span></div>
+        <div class="boss-hp"><div id="boss-hp-fill"></div></div>
+      </div>
+
+      <div id="dungeon-toast" class="dungeon-toast hidden"></div>
+    </div>
+  </div>
+
+  <!-- ======= NIGHT RESULT ======= -->
+  <div id="screen-night-result" class="screen">
+    <div class="story-card parchment">
+      <h2 id="night-result-title"></h2>
+      <div class="sadu-divider"></div>
+      <p id="night-result-text"></p>
+      <div class="inv-grid small" id="night-loot-grid"></div>
+      <button id="btn-night-continue" class="btn btn-accent">إلى الصباح ☀</button>
+    </div>
+  </div>
+
+  <!-- ======= WIN ======= -->
+  <div id="screen-win" class="screen">
+    <div class="story-card parchment gold-card">
+      <h2>🎉 السوق عاد للحياة</h2>
+      <div class="sadu-divider"></div>
+      <p>سدّدت دين جدّك كاملًا. عادت القوافل تحطّ في المرقب، وعاد الناس يقولون:<br>«روحوا لدكان سراج… عنده اللي ما تلقونه في مكان».<br><br>هذي بداية السالفة بس — والليل طويل.</p>
+      <button id="btn-win-continue" class="btn btn-accent">كمّل تجارة</button>
+    </div>
+  </div>
+
+  <!-- generic toast -->
+  <div id="toast" class="toast hidden"></div>
+</div>
+
+<script src="js/audio.js"></script>
+<script src="js/sprites.js"></script>
+<script src="js/data.js"></script>
+<script src="js/shop.js"></script>
+<script src="js/dungeon.js"></script>
+<script src="js/main.js"></script>
+</body>
+</html>
