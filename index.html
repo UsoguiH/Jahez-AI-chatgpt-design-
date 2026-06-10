@@ -2,7 +2,10 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="theme-color" content="#0b0a14">
 <title>سِراج — SIRAJ</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -185,10 +188,22 @@
       </div>
 
       <div class="hud hud-bottom-left">
-        <div class="hint-chip">⬅⬆⬇➡ حركة · <b>J</b> ضرب · <b>K</b> تفادي · <b>E</b> بخور العودة</div>
+        <div class="hint-chip kb-hint">⬅⬆⬇➡ حركة · <b>J</b> ضرب · <b>K</b> تفادي · <b>E</b> بخور العودة</div>
       </div>
       <div class="hud hud-bottom-right">
         <div class="minimap" id="minimap"></div>
+      </div>
+
+      <!-- mobile touch controls -->
+      <div id="touch-controls">
+        <div id="joy-zone">
+          <div id="joy-base"><div id="joy-knob"></div></div>
+        </div>
+        <div class="touch-buttons">
+          <button class="tbtn tbtn-big" id="tb-atk">⚔️</button>
+          <button class="tbtn" id="tb-dodge">💨</button>
+          <button class="tbtn" id="tb-bukhoor">🪔</button>
+        </div>
       </div>
 
       <div id="boss-banner" class="boss-banner hidden">
@@ -219,6 +234,11 @@
       <p>سدّدت دين جدّك كاملًا. عادت القوافل تحطّ في المرقب، وعاد الناس يقولون:<br>«روحوا لدكان سراج… عنده اللي ما تلقونه في مكان».<br><br>هذي بداية السالفة بس — والليل طويل.</p>
       <button id="btn-win-continue" class="btn btn-accent">كمّل تجارة</button>
     </div>
+  </div>
+
+  <!-- rotate hint for portrait phones -->
+  <div id="rotate-hint" class="hidden">
+    <div><span class="ricon">📱</span>اقلب الجوال بالعرض<br><small style="font-size:14px;color:#b9a77f">الدشّة أوضح وأسهل — أو اضغط للمتابعة</small></div>
   </div>
 
   <!-- generic toast -->

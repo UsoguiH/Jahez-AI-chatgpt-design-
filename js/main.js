@@ -2,7 +2,69 @@
 
 let G = null;
 const Keys = new Set();
+const TouchInput = { mx: 0, my: 0, atk: false, dodge: false, bukhoor: false };
 const SAVE_KEY = 'siraj_save_v1';
+
+/* ---------- mobile touch controls ---------- */
+function wireTouch() {
+  if (!('ontouchstart' in window) && navigator.maxTouchPoints === 0) return;
+  document.body.classList.add('touch');
+
+  const zone = document.getElementById('joy-zone');
+  const base = document.getElementById('joy-base');
+  const knob = document.getElementById('joy-knob');
+  let joyId = null, ox = 0, oy = 0;
+  const R = 44;
+
+  function setKnob(dx, dy) {
+    const len = Math.hypot(dx, dy);
+    const cl = Math.min(len, R);
+    const nx = len ? dx / len : 0, ny = len ? dy / len : 0;
+    knob.style.transform = `translate(calc(-50% + ${nx * cl}px), calc(-50% + ${ny * cl}px))`;
+    if (len > 12) { TouchInput.mx = nx; TouchInput.my = ny; }
+    else { TouchInput.mx = 0; TouchInput.my = 0; }
+  }
+  zone.addEventListener('touchstart', e => {
+    e.preventDefault();
+    const t = e.changedTouches[0];
+    if (joyId !== null) return;
+    joyId = t.identifier;
+    const zr = zone.getBoundingClientRect();
+    ox = t.clientX; oy = t.clientY;
+    base.style.left = (t.clientX - zr.left - 55) + 'px';
+    base.style.top = (t.clientY - zr.top - 55) + 'px';
+    base.style.bottom = 'auto';
+    base.classList.add('on');
+    setKnob(0, 0);
+  }, { passive: false });
+  zone.addEventListener('touchmove', e => {
+    e.preventDefault();
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) setKnob(t.clientX - ox, t.clientY - oy);
+    }
+  }, { passive: false });
+  const joyEnd = e => {
+    for (const t of e.changedTouches) {
+      if (t.identifier === joyId) {
+        joyId = null; base.classList.remove('on');
+        TouchInput.mx = 0; TouchInput.my = 0;
+      }
+    }
+  };
+  zone.addEventListener('touchend', joyEnd);
+  zone.addEventListener('touchcancel', joyEnd);
+
+  const bindBtn = (id, key, flag) => {
+    const el = document.getElementById(id);
+    el.addEventListener('touchstart', e => { e.preventDefault(); Keys.add(key); TouchInput[flag] = true; }, { passive: false });
+    const off = e => { e.preventDefault(); Keys.delete(key); };
+    el.addEventListener('touchend', off, { passive: false });
+    el.addEventListener('touchcancel', off, { passive: false });
+  };
+  bindBtn('tb-atk', 'j', 'atk');
+  bindBtn('tb-dodge', 'k', 'dodge');
+  bindBtn('tb-bukhoor', 'e', 'bukhoor');
+}
 
 function newGame() {
   G = {
@@ -146,9 +208,24 @@ function renderZones() {
 }
 
 /* ---------- night ---------- */
+let rotateDismissed = false;
+function maybeRotateHint() {
+  const el = document.getElementById('rotate-hint');
+  const dungeonActive = document.getElementById('screen-dungeon').classList.contains('active');
+  const portrait = window.innerHeight > window.innerWidth;
+  if (!rotateDismissed && dungeonActive && portrait && document.body.classList.contains('touch')) {
+    el.classList.remove('hidden');
+  } else {
+    el.classList.add('hidden');
+  }
+}
+window.addEventListener('resize', maybeRotateHint);
+window.addEventListener('orientationchange', () => setTimeout(maybeRotateHint, 300));
+
 function startNight(zoneId) {
   show('screen-dungeon');
   Dungeon.start();
+  maybeRotateHint();
 }
 
 function endNight(result, player) {
@@ -256,6 +333,7 @@ window.addEventListener('DOMContentLoaded', () => {
   Shop.init();
   Dungeon.init();
   wireShopUI();
+  wireTouch();
 
   if (localStorage.getItem(SAVE_KEY)) document.getElementById('btn-continue').classList.remove('hidden');
 
@@ -278,6 +356,9 @@ window.addEventListener('DOMContentLoaded', () => {
     if (introPage === INTRO_PAGES.length - 1) document.getElementById('btn-intro-next').textContent = '☀ افتح الدكان';
   };
 
+  document.getElementById('rotate-hint').addEventListener('click', () => {
+    rotateDismissed = true; maybeRotateHint();
+  });
   document.getElementById('btn-pay-debt').onclick = payDebt;
   document.getElementById('debt-slider').oninput = () =>
     document.getElementById('debt-amt').textContent = document.getElementById('debt-slider').value;

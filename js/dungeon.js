@@ -172,6 +172,7 @@ const Dungeon = {
     if (Keys.has('arrowright') || Keys.has('d')) mx += 1;
     if (Keys.has('arrowup') || Keys.has('w')) my -= 1;
     if (Keys.has('arrowdown') || Keys.has('s')) my += 1;
+    if (!mx && !my && (TouchInput.mx || TouchInput.my)) { mx = TouchInput.mx; my = TouchInput.my; }
     if (p.dodgeT > 0) { mx = p.fx; my = p.fy; }
     if (mx || my) {
       const d = Math.hypot(mx, my);
@@ -195,15 +196,17 @@ const Dungeon = {
     p.atkT = Math.max(0, p.atkT - dt);
     p.atkCd = Math.max(0, p.atkCd - dt);
 
-    // actions
-    if ((Keys.has('j') || Keys.has('z') || Keys.has(' ')) && p.atkCd <= 0) {
+    // actions (keyboard or one-shot touch flags)
+    if ((Keys.has('j') || Keys.has('z') || Keys.has(' ') || TouchInput.atk) && p.atkCd <= 0) {
       p.atkT = 0.16; p.atkCd = 0.38; SFX.hit();
       this.doAttack();
     }
-    if ((Keys.has('k') || Keys.has('x') || Keys.has('shift')) && p.dodgeCd <= 0 && (p.fx || p.fy)) {
+    if ((Keys.has('k') || Keys.has('x') || Keys.has('shift') || TouchInput.dodge) && p.dodgeCd <= 0 && (p.fx || p.fy)) {
       p.dodgeT = 0.16; p.dodgeCd = 0.8; p.invuln = Math.max(p.invuln, 0.4); SFX.dodge();
     }
-    if (Keys.has('e') && p.bukhoor > 0) {
+    const wantEscape = Keys.has('e') || TouchInput.bukhoor;
+    TouchInput.atk = false; TouchInput.dodge = false; TouchInput.bukhoor = false;
+    if (wantEscape && p.bukhoor > 0) {
       p.bukhoor = 0; SFX.smoke();
       this.finish('escape');
       return;

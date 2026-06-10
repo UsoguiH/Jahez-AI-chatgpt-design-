@@ -255,9 +255,9 @@ const Shop = {
     const x = (e.clientX - r.left) * (this.cv.width / r.width);
     const y = (e.clientY - r.top) * (this.cv.height / r.height);
 
-    // customer waiting to haggle?
+    // customer waiting to haggle? (generous tap target for mobile)
     for (const c of this.customers) {
-      if (c.state === 'haggleWait' && Math.abs(x - c.x) < 36 && Math.abs(y - (c.y - 36)) < 44) {
+      if (c.state === 'haggleWait' && Math.abs(x - c.x) < 54 && Math.abs(y - (c.y - 40)) < 70) {
         SFX.click(); this.openHaggle(c); return;
       }
     }
@@ -265,7 +265,7 @@ const Shop = {
     const stands = this.standPositions();
     for (let i = 0; i < stands.length; i++) {
       const s = stands[i];
-      if (Math.abs(x - s.x) < 52 && Math.abs(y - s.y) < 36) {
+      if (Math.abs(x - s.x) < 60 && Math.abs(y - s.y) < 46) {
         SFX.click(); openStockModal(i); return;
       }
     }

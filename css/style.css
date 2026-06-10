@@ -123,10 +123,12 @@ body{
 .gold-card{box-shadow:0 0 60px rgba(244,185,66,.35), 0 10px 40px rgba(0,0,0,.6);}
 
 /* ============ canvas + HUD ============ */
-.canvas-wrap{position:relative; width:832px; max-width:100%;}
+.canvas-wrap{position:relative; width:fit-content; max-width:100%;}
 canvas{display:block; image-rendering:pixelated;}
 #shop-canvas,#dungeon-canvas{
-  width:100%; border:4px solid var(--wood-dark); border-radius:8px;
+  width:min(832px, 100vw, calc((100dvh - 16px) * 1.625));
+  height:auto;
+  border:4px solid var(--wood-dark); border-radius:8px;
   box-shadow:0 14px 50px rgba(0,0,0,.7);
 }
 .hud{position:absolute; z-index:5; display:flex; flex-direction:column; gap:8px;}
@@ -388,6 +390,95 @@ input[type=range]::-webkit-slider-thumb{
   animation:toastpop .25s ease-out; text-align:center; max-width:80%;
 }
 @keyframes toastpop{from{opacity:0; transform:translateX(-50%) translateY(-12px);}to{opacity:1; transform:translateX(-50%) translateY(0);}}
+
+/* ============ touch controls ============ */
+#touch-controls{display:none;}
+body.touch #screen-dungeon.active #touch-controls{display:block;}
+#joy-zone{
+  position:absolute; left:0; bottom:0; width:46%; height:62%; z-index:8;
+  touch-action:none;
+}
+#joy-base{
+  position:absolute; width:110px; height:110px; border-radius:50%;
+  background:rgba(236,217,171,.10); border:2px solid rgba(236,217,171,.30);
+  left:30px; bottom:30px; display:none;
+}
+#joy-base.on{display:block;}
+#joy-knob{
+  position:absolute; left:50%; top:50%; width:52px; height:52px; border-radius:50%;
+  transform:translate(-50%,-50%);
+  background:radial-gradient(circle at 35% 30%, #ffe28a, var(--amber) 65%, #b07f1a);
+  border:2px solid var(--wood-dark); box-shadow:0 3px 10px rgba(0,0,0,.5);
+}
+.touch-buttons{
+  position:absolute; right:14px; bottom:64px; z-index:8;
+  display:flex; flex-direction:column; gap:12px; align-items:center;
+  touch-action:none;
+}
+.tbtn{
+  width:58px; height:58px; border-radius:50%; font-size:24px;
+  background:rgba(20,15,8,.7); border:2px solid var(--wood-light);
+  box-shadow:0 3px 10px rgba(0,0,0,.5); color:var(--cream);
+}
+.tbtn-big{width:74px; height:74px; font-size:32px; border-color:var(--amber);}
+.tbtn:active{filter:brightness(1.4); transform:scale(.93);}
+body.touch .kb-hint{display:none;}
+body.touch .hud-bottom-right .minimap{transform:scale(.8); transform-origin:bottom right;}
+@media (max-height:480px){
+  .tbtn{width:46px; height:46px; font-size:19px;}
+  .tbtn-big{width:58px; height:58px; font-size:25px;}
+  .touch-buttons{bottom:20px; right:8px; gap:8px;}
+}
+
+/* rotate hint (portrait phones in the dungeon) */
+#rotate-hint{
+  position:absolute; inset:0; z-index:60;
+  background:rgba(8,6,14,.88); color:var(--cream);
+  display:flex; align-items:center; justify-content:center; text-align:center;
+  font-family:'Reem Kufi',sans-serif; font-size:22px; line-height:2;
+}
+#rotate-hint .ricon{font-size:52px; display:block; animation:spin90 1.6s ease-in-out infinite;}
+@keyframes spin90{0%,55%,100%{transform:rotate(0)}25%,35%{transform:rotate(90deg)}}
+
+/* ============ small screens ============ */
+@media (max-width:700px){
+  #game-frame{width:100vw; height:100dvh;}
+  .game-title{font-size:52px;}
+  .game-subtitle{font-size:14px;}
+  .btn{font-size:14px; padding:8px 16px;}
+  .btn-big{font-size:17px; padding:11px 26px;}
+  .parchment{padding:16px 14px;}
+  .story-card p{font-size:15px; line-height:1.9;}
+  .phase-chip,.hint-chip{font-size:11px; padding:4px 10px;}
+  .day-arch{width:118px; height:36px;}
+  .day-arch-inner{font-size:15px; padding-top:7px; border-width:2px;}
+  .hud-coin{font-size:14px; padding:3px 10px 3px 8px;}
+  .rep-bar{width:60px;}
+  .hp-bar{width:84px;}
+  .satchel{grid-template-columns:repeat(2, 30px); gap:4px;}
+  .satchel .sslot{width:30px; height:30px;}
+  .satchel .sslot canvas{width:24px; height:24px;}
+  .minimap{grid-template-columns:repeat(3,12px); padding:5px;}
+  .minimap .mroom{width:12px; height:9px;}
+  .boss-banner{width:78%; bottom:120px;}
+  .boss-banner-scroll{font-size:15px;}
+  .modal-card h3{font-size:18px;}
+  .haggle-speech{font-size:14.5px; padding:8px 12px;}
+  #haggle-portrait{width:70px; height:70px;}
+  .haggle-buttons .btn{font-size:13px; padding:7px 12px;}
+  .price-display{font-size:19px; min-width:100px;}
+  .step-btn{width:34px; height:34px;}
+  .zone-card{width:124px; padding:10px 8px;}
+  .zone-card .zname{font-size:13.5px;}
+  .zone-card .zsub{font-size:10px;}
+  .zones-title{font-size:22px;}
+  .evening-card h2{font-size:20px;}
+  .ledger-line{font-size:13px;}
+  .upgrade-board{padding:38px 12px 14px;}
+  .upgrade-banner{font-size:16px; padding:6px 22px 13px;}
+  .upgrade-card .udesc{min-height:0;}
+  .evening-buttons .btn{font-size:13px;}
+}
 
 /* scrollbars */
 ::-webkit-scrollbar{width:9px;}
