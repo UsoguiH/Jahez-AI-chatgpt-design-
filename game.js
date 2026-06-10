@@ -1098,7 +1098,9 @@ function showTitle() {
     "<input id='nameIn' type='text' maxlength='14' placeholder='your future regret' value='" + esc(G.name) + "'>" +
     "<div class='diff'>DIFFICULTY: <span class='locked'>Easy</span> <span class='locked'>Normal</span> <span class='only'>[ THE ONLY MODE ]</span></div>" +
     "<button id='startBtn'>I CONSENT TO EMOTIONAL DAMAGE</button>" +
-    "<div class='keys'>←→/AD move · SPACE jump · R restart (costs a death) · M mute · ESC begs for mercy</div>" +
+    "<div class='keys'>" + (TOUCH
+      ? "◀ ▶ move · JUMP jumps (hold = higher) · ↻ restart (costs a death) · ♪ mute"
+      : "←→/AD move · SPACE jump · R restart (costs a death) · M mute · ESC begs for mercy") + "</div>" +
     "<div class='tiny'>7 levels. No checkpoints. No excuses. All insults aimed at your gameplay are aimed at your gameplay.</div>" +
     "</div>"
   );
@@ -1109,6 +1111,8 @@ function showTitle() {
     G.name = (inp.value.trim() || 'champ').slice(0, 14);
     store.set('name', G.name);
     audio();
+    goFullscreen();
+    showTouchPad();
     fakeLoading();
   });
 }
@@ -1132,10 +1136,13 @@ function startLevel(idx) {
   loadLevel(idx);
   const lv = LEVELS[idx];
   G.mode = 'intro';
+  const introHtml = (idx === 0 && TOUCH)
+    ? "Hold ◀ ▶ to move. Tap JUMP — hold it to jump higher. Even you can't mess this up.<br><span class='roast'>(You will mess this up. With your thumbs, this time.)</span>"
+    : lv.intro;
   show(
     "<div class='panel'>" +
     "<h2>LEVEL " + (idx + 1) + "/" + LEVELS.length + ": " + lv.name + "</h2>" +
-    "<p>" + lv.intro + "</p>" +
+    "<p>" + introHtml + "</p>" +
     "<button id='goBtn'>" + (idx === 0 ? "BEGIN" : "CONTINUE SUFFERING") + "</button>" +
     "</div>"
   );
@@ -1242,6 +1249,50 @@ window.addEventListener('keyup', e => {
   if (c === 'ArrowRight' || c === 'KeyD') keys.right = false;
   if (c === 'Space' || c === 'ArrowUp' || c === 'KeyW') keys.jump = false;
 });
+
+/* ============================ TOUCH CONTROLS ============================= */
+const TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+const touchPad = document.getElementById('touch');
+function bindHold(id, down, up) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    el.classList.add('held');
+    down();
+    if (G.mode === 'play') { G.lastInput = G.time; G.idleWarned = false; }
+  });
+  const release = e => { e.preventDefault(); el.classList.remove('held'); up(); };
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+}
+if (TOUCH) {
+  bindHold('tLeft',  () => { keys.left = true; },  () => { keys.left = false; });
+  bindHold('tRight', () => { keys.right = true; }, () => { keys.right = false; });
+  bindHold('tJump',
+    () => { if (!keys.jump) keys.jumpPressed = true; keys.jump = true; },
+    () => { keys.jump = false; });
+  bindHold('tRestart', () => { if (G.mode === 'play') die('restart'); }, () => {});
+  bindHold('tMute', () => {
+    G.muted = !G.muted; store.set('muted', G.muted);
+    const el = document.getElementById('tMute');
+    if (el) el.style.opacity = G.muted ? 0.35 : 1;
+  }, () => {});
+  if (G.muted) { const el = document.getElementById('tMute'); if (el) el.style.opacity = 0.35; }
+}
+function showTouchPad() { if (TOUCH && touchPad) touchPad.classList.add('on'); }
+function goFullscreen() {
+  if (!TOUCH) return;
+  try {
+    const el = document.documentElement;
+    const p = el.requestFullscreen && el.requestFullscreen();
+    if (p && p.then) p.then(() => {
+      if (screen.orientation && screen.orientation.lock)
+        screen.orientation.lock('landscape').catch(() => {});
+    }).catch(() => {});
+  } catch (e) {}
+}
 
 /* ===================== RAGE-QUIT SURVEILLANCE ============================ */
 let hiddenAt = 0;

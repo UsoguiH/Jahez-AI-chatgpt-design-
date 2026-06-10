@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>YOU SUCK AT THIS™ — a love letter to your inadequacy</title>
 <style>
   :root {
@@ -32,6 +32,11 @@
     position: relative;
     aspect-ratio: 16 / 9;
     width: min(100vw, calc(100vh * 16 / 9));
+    width: min(100dvw, calc(100dvh * 16 / 9));
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   canvas {
     position: absolute;
@@ -126,15 +131,83 @@
   .diff .only { color: var(--accent); font-weight: bold; }
   .keys { font-size: 12px; color: var(--dim); margin-top: 14px; }
   .tiny { font-size: 11px; color: #555570; margin-top: 12px; }
+  /* ---------- touch controls ---------- */
+  #touch {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    display: none;
+  }
+  #touch.on { display: block; }
+  .tbtn {
+    pointer-events: auto;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 17vmin;
+    height: 17vmin;
+    max-width: 92px;
+    max-height: 92px;
+    border-radius: 50%;
+    background: rgba(60, 60, 95, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 5.5vmin;
+    font-weight: bold;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tbtn:active, .tbtn.held {
+    background: rgba(255, 51, 85, 0.45);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  #tLeft  { left: 3%;  bottom: 6%; }
+  #tRight { left: calc(3% + 19vmin); bottom: 6%; }
+  #tJump  { right: 3%; bottom: 6%; width: 22vmin; height: 22vmin; max-width: 116px; max-height: 116px; font-size: 4vmin; }
+  .tbtn.mini {
+    width: 9vmin; height: 9vmin; max-width: 48px; max-height: 48px;
+    font-size: 4vmin; border-radius: 12px;
+    background: rgba(40, 40, 65, 0.4);
+  }
+  #tMute    { right: 2%; top: 2%; }
+  #tRestart { right: 2%; top: calc(2% + 11vmin); }
+  /* ---------- rotate hint ---------- */
+  #rotate {
+    display: none;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: #ffcc00;
+    background: rgba(10, 10, 18, 0.92);
+    border-top: 1px solid #2a2a3d;
+    z-index: 20;
+  }
+  @media (orientation: portrait) and (pointer: coarse) {
+    #rotate { display: block; }
+  }
 </style>
 </head>
 <body>
   <div id="wrap">
     <div id="stage">
       <canvas id="game" width="960" height="540"></canvas>
+      <div id="touch">
+        <div id="tLeft" class="tbtn">◀</div>
+        <div id="tRight" class="tbtn">▶</div>
+        <div id="tJump" class="tbtn">JUMP</div>
+        <div id="tMute" class="tbtn mini">♪</div>
+        <div id="tRestart" class="tbtn mini">↻</div>
+      </div>
       <div id="overlay"></div>
     </div>
   </div>
+  <div id="rotate">ROTATE YOUR PHONE — yes, even your screen orientation is being judged.</div>
   <script src="game.js"></script>
 </body>
 </html>

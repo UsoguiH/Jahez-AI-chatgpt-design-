@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>YOU SUCK AT THIS™ — a love letter to your inadequacy</title>
 <style>
   :root {
@@ -32,6 +32,11 @@
     position: relative;
     aspect-ratio: 16 / 9;
     width: min(100vw, calc(100vh * 16 / 9));
+    width: min(100dvw, calc(100dvh * 16 / 9));
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
   }
   canvas {
     position: absolute;
@@ -126,15 +131,83 @@
   .diff .only { color: var(--accent); font-weight: bold; }
   .keys { font-size: 12px; color: var(--dim); margin-top: 14px; }
   .tiny { font-size: 11px; color: #555570; margin-top: 12px; }
+  /* ---------- touch controls ---------- */
+  #touch {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 5;
+    display: none;
+  }
+  #touch.on { display: block; }
+  .tbtn {
+    pointer-events: auto;
+    position: absolute;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 17vmin;
+    height: 17vmin;
+    max-width: 92px;
+    max-height: 92px;
+    border-radius: 50%;
+    background: rgba(60, 60, 95, 0.35);
+    border: 2px solid rgba(255, 255, 255, 0.25);
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 5.5vmin;
+    font-weight: bold;
+    touch-action: none;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .tbtn:active, .tbtn.held {
+    background: rgba(255, 51, 85, 0.45);
+    border-color: rgba(255, 255, 255, 0.6);
+  }
+  #tLeft  { left: 3%;  bottom: 6%; }
+  #tRight { left: calc(3% + 19vmin); bottom: 6%; }
+  #tJump  { right: 3%; bottom: 6%; width: 22vmin; height: 22vmin; max-width: 116px; max-height: 116px; font-size: 4vmin; }
+  .tbtn.mini {
+    width: 9vmin; height: 9vmin; max-width: 48px; max-height: 48px;
+    font-size: 4vmin; border-radius: 12px;
+    background: rgba(40, 40, 65, 0.4);
+  }
+  #tMute    { right: 2%; top: 2%; }
+  #tRestart { right: 2%; top: calc(2% + 11vmin); }
+  /* ---------- rotate hint ---------- */
+  #rotate {
+    display: none;
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    padding: 10px;
+    text-align: center;
+    font-size: 13px;
+    color: #ffcc00;
+    background: rgba(10, 10, 18, 0.92);
+    border-top: 1px solid #2a2a3d;
+    z-index: 20;
+  }
+  @media (orientation: portrait) and (pointer: coarse) {
+    #rotate { display: block; }
+  }
 </style>
 </head>
 <body>
   <div id="wrap">
     <div id="stage">
       <canvas id="game" width="960" height="540"></canvas>
+      <div id="touch">
+        <div id="tLeft" class="tbtn">◀</div>
+        <div id="tRight" class="tbtn">▶</div>
+        <div id="tJump" class="tbtn">JUMP</div>
+        <div id="tMute" class="tbtn mini">♪</div>
+        <div id="tRestart" class="tbtn mini">↻</div>
+      </div>
       <div id="overlay"></div>
     </div>
   </div>
+  <div id="rotate">ROTATE YOUR PHONE — yes, even your screen orientation is being judged.</div>
   <script>
 'use strict';
 /* ==========================================================================
@@ -1236,7 +1309,9 @@ function showTitle() {
     "<input id='nameIn' type='text' maxlength='14' placeholder='your future regret' value='" + esc(G.name) + "'>" +
     "<div class='diff'>DIFFICULTY: <span class='locked'>Easy</span> <span class='locked'>Normal</span> <span class='only'>[ THE ONLY MODE ]</span></div>" +
     "<button id='startBtn'>I CONSENT TO EMOTIONAL DAMAGE</button>" +
-    "<div class='keys'>←→/AD move · SPACE jump · R restart (costs a death) · M mute · ESC begs for mercy</div>" +
+    "<div class='keys'>" + (TOUCH
+      ? "◀ ▶ move · JUMP jumps (hold = higher) · ↻ restart (costs a death) · ♪ mute"
+      : "←→/AD move · SPACE jump · R restart (costs a death) · M mute · ESC begs for mercy") + "</div>" +
     "<div class='tiny'>7 levels. No checkpoints. No excuses. All insults aimed at your gameplay are aimed at your gameplay.</div>" +
     "</div>"
   );
@@ -1247,6 +1322,8 @@ function showTitle() {
     G.name = (inp.value.trim() || 'champ').slice(0, 14);
     store.set('name', G.name);
     audio();
+    goFullscreen();
+    showTouchPad();
     fakeLoading();
   });
 }
@@ -1270,10 +1347,13 @@ function startLevel(idx) {
   loadLevel(idx);
   const lv = LEVELS[idx];
   G.mode = 'intro';
+  const introHtml = (idx === 0 && TOUCH)
+    ? "Hold ◀ ▶ to move. Tap JUMP — hold it to jump higher. Even you can't mess this up.<br><span class='roast'>(You will mess this up. With your thumbs, this time.)</span>"
+    : lv.intro;
   show(
     "<div class='panel'>" +
     "<h2>LEVEL " + (idx + 1) + "/" + LEVELS.length + ": " + lv.name + "</h2>" +
-    "<p>" + lv.intro + "</p>" +
+    "<p>" + introHtml + "</p>" +
     "<button id='goBtn'>" + (idx === 0 ? "BEGIN" : "CONTINUE SUFFERING") + "</button>" +
     "</div>"
   );
@@ -1380,6 +1460,50 @@ window.addEventListener('keyup', e => {
   if (c === 'ArrowRight' || c === 'KeyD') keys.right = false;
   if (c === 'Space' || c === 'ArrowUp' || c === 'KeyW') keys.jump = false;
 });
+
+/* ============================ TOUCH CONTROLS ============================= */
+const TOUCH = ('ontouchstart' in window) || navigator.maxTouchPoints > 0;
+const touchPad = document.getElementById('touch');
+function bindHold(id, down, up) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  el.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    try { el.setPointerCapture(e.pointerId); } catch (err) {}
+    el.classList.add('held');
+    down();
+    if (G.mode === 'play') { G.lastInput = G.time; G.idleWarned = false; }
+  });
+  const release = e => { e.preventDefault(); el.classList.remove('held'); up(); };
+  el.addEventListener('pointerup', release);
+  el.addEventListener('pointercancel', release);
+}
+if (TOUCH) {
+  bindHold('tLeft',  () => { keys.left = true; },  () => { keys.left = false; });
+  bindHold('tRight', () => { keys.right = true; }, () => { keys.right = false; });
+  bindHold('tJump',
+    () => { if (!keys.jump) keys.jumpPressed = true; keys.jump = true; },
+    () => { keys.jump = false; });
+  bindHold('tRestart', () => { if (G.mode === 'play') die('restart'); }, () => {});
+  bindHold('tMute', () => {
+    G.muted = !G.muted; store.set('muted', G.muted);
+    const el = document.getElementById('tMute');
+    if (el) el.style.opacity = G.muted ? 0.35 : 1;
+  }, () => {});
+  if (G.muted) { const el = document.getElementById('tMute'); if (el) el.style.opacity = 0.35; }
+}
+function showTouchPad() { if (TOUCH && touchPad) touchPad.classList.add('on'); }
+function goFullscreen() {
+  if (!TOUCH) return;
+  try {
+    const el = document.documentElement;
+    const p = el.requestFullscreen && el.requestFullscreen();
+    if (p && p.then) p.then(() => {
+      if (screen.orientation && screen.orientation.lock)
+        screen.orientation.lock('landscape').catch(() => {});
+    }).catch(() => {});
+  } catch (e) {}
+}
 
 /* ===================== RAGE-QUIT SURVEILLANCE ============================ */
 let hiddenAt = 0;
