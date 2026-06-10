@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>YOU SUCK AT THIS™ — a love letter to your inadequacy</title>
+<style>
+  :root {
+    --bg: #0b0b12;
+    --panel: #14141f;
+    --accent: #ff3355;
+    --accent2: #ffcc00;
+    --text: #e8e8f0;
+    --dim: #8a8aa0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: "Courier New", ui-monospace, monospace;
+    overflow: hidden;
+  }
+  #wrap {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  #stage {
+    position: relative;
+    aspect-ratio: 16 / 9;
+    width: min(100vw, calc(100vh * 16 / 9));
+  }
+  canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    image-rendering: pixelated;
+    background: #0b0b12;
+  }
+  #overlay {
+    position: absolute;
+    inset: 0;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    background: rgba(8, 8, 14, 0.88);
+    backdrop-filter: blur(2px);
+    z-index: 10;
+  }
+  #overlay.visible { display: flex; }
+  .panel {
+    max-width: 640px;
+    padding: 28px 36px;
+    border: 2px solid #2a2a3d;
+    background: var(--panel);
+    box-shadow: 0 0 40px rgba(255, 51, 85, 0.15);
+  }
+  .panel h1 {
+    font-size: 38px;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-shadow: 3px 3px 0 #000;
+    margin-bottom: 6px;
+  }
+  .panel h2 { font-size: 24px; color: var(--accent); margin-bottom: 10px; }
+  .panel .sub { color: var(--dim); font-size: 14px; margin-bottom: 18px; }
+  .panel p { font-size: 15px; line-height: 1.5; margin-bottom: 12px; }
+  .panel .roast { color: var(--accent2); font-style: italic; }
+  .panel .stats {
+    display: inline-block;
+    text-align: left;
+    margin: 10px 0 16px;
+    font-size: 14px;
+    color: var(--text);
+  }
+  .panel .stats div { padding: 2px 0; }
+  .panel .stats b { color: var(--accent2); }
+  .rank {
+    font-size: 72px;
+    color: var(--accent2);
+    text-shadow: 4px 4px 0 #000;
+    margin: 8px 0;
+  }
+  button {
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 26px;
+    margin: 6px;
+    color: #fff;
+    background: var(--accent);
+    border: none;
+    cursor: pointer;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 0 #99182f;
+    transition: transform 0.05s;
+  }
+  button:hover { transform: translateY(-2px); }
+  button:active { transform: translateY(2px); box-shadow: none; }
+  button.ghost {
+    background: #23233a;
+    box-shadow: 0 4px 0 #101020;
+    color: var(--dim);
+  }
+  input[type="text"] {
+    font-family: inherit;
+    font-size: 16px;
+    padding: 10px 14px;
+    width: 260px;
+    text-align: center;
+    background: #0c0c16;
+    color: var(--accent2);
+    border: 2px solid #2a2a3d;
+    outline: none;
+    margin-bottom: 14px;
+  }
+  input[type="text"]:focus { border-color: var(--accent); }
+  .diff { font-size: 13px; color: var(--dim); margin: 10px 0 16px; }
+  .diff span { margin: 0 8px; }
+  .diff .locked { text-decoration: line-through; opacity: 0.5; }
+  .diff .only { color: var(--accent); font-weight: bold; }
+  .keys { font-size: 12px; color: var(--dim); margin-top: 14px; }
+  .tiny { font-size: 11px; color: #555570; margin-top: 12px; }
+</style>
+</head>
+<body>
+  <div id="wrap">
+    <div id="stage">
+      <canvas id="game" width="960" height="540"></canvas>
+      <div id="overlay"></div>
+    </div>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
