@@ -1,12 +1,64 @@
-# Claude Computer Use — Game-Playing Agent
+# Computer Use — Game-Playing Agent
 
-A minimal agent that **captures the screen, sends it to Claude for analysis, and
-executes the mouse/keyboard actions Claude chooses** — in a loop — to play a game
-running on your machine.
+Captures the screen, analyzes each frame with Claude, and executes mouse/keyboard
+actions in a loop to play a game on your machine.
 
-It uses the Claude **Computer Use** tool, which is a *client-side* beta tool:
-Claude only sees screenshots and emits action requests; **your code** (this repo)
-performs the actual clicks and keypresses and feeds back the resulting frame.
+## Two ways to run it — pick one
+
+| | **Claude Code** (MCP) | **Claude API** (standalone script) |
+|---|---|---|
+| Entry point | `mcp_server.py` + `.mcp.json` | `game_agent.py` |
+| Who runs the loop | Claude Code's own agent loop | the hand-written loop in the script |
+| The tool | MCP tools (`screenshot`, `left_click`, `key`, …) | the `computer_20250124` API tool |
+| You need | Claude Code installed | an `ANTHROPIC_API_KEY` |
+
+👉 **If you want Claude Code, use the MCP server** (next section). Claude Code has
+no built-in screen/mouse control, so we expose it as MCP tools and let Claude
+Code drive. The `computer_20250124` tool and `game_agent.py` are the **API**
+path — different mechanism, same `controller.py` underneath.
+
+---
+
+## A) Use it with Claude Code (recommended for you)
+
+`mcp_server.py` is an MCP server exposing `screenshot`, `left_click`,
+`right_click`, `double_click`, `drag`, `move`, `key`, `hold_key`, `type_text`,
+`scroll`, and `screen_info`. Claude Code calls them in its normal agent loop:
+it takes a screenshot, *sees the image*, decides, acts, screenshots again.
+
+```bash
+pip install -r requirements.txt          # installs the `mcp` package too
+```
+
+Register the server with Claude Code, either way:
+
+- **Project config (committed):** a `.mcp.json` is included in this folder.
+  Launch `claude` from inside `computer-use-game-agent/` and approve the
+  `game-controller` server when prompted.
+- **CLI:** from this folder run
+  ```bash
+  claude mcp add game-controller -- python mcp_server.py
+  ```
+
+Then just ask Claude Code to play, e.g.:
+
+> Use the game-controller tools to play this game. First call screen_info and
+> screenshot to see the screen. Goal: reach the flag on the right — move with
+> the arrow keys (hold_key "Right"), jump with `key "space"`, avoid enemies.
+> After every action, take a screenshot and verify before the next move.
+
+Claude Code handles the loop; you watch it play.
+
+> The `SKILL.md` in this folder documents the same workflow as a reusable Claude
+> skill (trigger conditions, procedure, rules).
+
+---
+
+## B) Use it with the Claude API (standalone script)
+
+`game_agent.py` runs the loop itself via the **Computer Use** tool — a
+*client-side* beta tool where Claude sees screenshots and emits action requests
+and the script performs the clicks/keypresses.
 
 | | |
 |---|---|
